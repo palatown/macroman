@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -79,7 +80,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     val workouts: StateFlow<List<WorkoutEntry>> = day.flatMapLatest { dao.workouts(it.toString()) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-    val frequentFood = dao.frequentFood().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    val waterMl: StateFlow<Int> = day.flatMapLatest { dao.waterMl(it.toString()) }
+        .map { it ?: 0 }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
+    val frequentFood =dao.frequentFood().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     val frequentWorkouts = dao.frequentWorkouts().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     var busy by mutableStateOf(false)
@@ -102,6 +106,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             lastResumeDate = now
             day.value = now
         }
+    }
+
+    fun addWater(deltaMl: Int) {
+        val dayKey = day.value.toString()
+        viewModelScope.launch { dao.addWater(dayKey, deltaMl) }
     }
 
     /** Entries logged on today get the current time; back-filled days get noon so they sort sensibly. */

@@ -12,8 +12,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -70,6 +74,7 @@ fun FoodScreen(vm: MainViewModel, snackbar: SnackbarHostState, modifier: Modifie
     val food by vm.food.collectAsStateWithLifecycle()
     val workouts by vm.workouts.collectAsStateWithLifecycle()
     val frequent by vm.frequentFood.collectAsStateWithLifecycle()
+    val waterMl by vm.waterMl.collectAsStateWithLifecycle()
     var text by rememberInputText()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -112,7 +117,7 @@ fun FoodScreen(vm: MainViewModel, snackbar: SnackbarHostState, modifier: Modifie
 
     Column(modifier) {
         DayBar(day, vm::shiftDay, vm::today, trailing = if (training) "Training day" else "Rest day")
-        MacroSummary(food, targets)
+        MacroSummary(food, targets, waterMl, vm::addWater)
         if (frequent.isNotEmpty()) {
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 12.dp),
@@ -205,18 +210,50 @@ private fun PhotoChip(thumbnail: ImageBitmap?, enabled: Boolean, onRemove: () ->
 }
 
 @Composable
-private fun MacroSummary(food: List<FoodEntry>, t: Targets) {
+private fun MacroSummary(food: List<FoodEntry>, t: Targets, waterMl: Int, onWater: (Int) -> Unit) {
     val p = food.sumOf { it.protein }
     val c = food.sumOf { it.carbs }
     val f = food.sumOf { it.fat }
     val kcal = food.sumOf { it.calories }
-    Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        MacroBar("Protein", p, t.protein, "g", MacroColors.protein)
-        MacroBar("Carbs", c, t.carbs, "g", MacroColors.carbs)
-        MacroBar("Fat", f, t.fat, "g", MacroColors.fat)
-        MacroBar("Calories", kcal, t.calories, "", MaterialTheme.colorScheme.primary)
+    Row(
+        Modifier.padding(start = 16.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            MacroBar("Protein", p, t.protein, "g", MacroColors.protein)
+            MacroBar("Carbs", c, t.carbs, "g", MacroColors.carbs)
+            MacroBar("Fat", f, t.fat, "g", MacroColors.fat)
+            MacroBar("Calories", kcal, t.calories, "", MaterialTheme.colorScheme.primary)
+        }
+        WaterLogger(waterMl, onWater)
     }
     Spacer(Modifier.height(4.dp))
+}
+
+private const val WATER_STEP_ML = 500
+
+@Composable
+private fun WaterLogger(ml: Int, onChange: (Int) -> Unit) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Icon(Icons.Default.WaterDrop, null, Modifier.size(22.dp), tint = MacroColors.carbs)
+        Text(
+            "%.1f L".format(ml / 1000.0),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            FilledTonalIconButton(
+                onClick = { onChange(-WATER_STEP_ML) },
+                enabled = ml > 0,
+                modifier = Modifier.size(40.dp),
+            ) { Icon(Icons.Default.Remove, "Remove 0.5 litres of water") }
+            FilledTonalIconButton(
+                onClick = { onChange(WATER_STEP_ML) },
+                modifier = Modifier.size(40.dp),
+            ) { Icon(Icons.Default.Add, "Add 0.5 litres of water") }
+        }
+    }
 }
 
 object MacroColors {

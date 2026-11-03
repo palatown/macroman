@@ -10,6 +10,7 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.Transaction
 import androidx.room.Update
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
@@ -45,6 +46,13 @@ data class WorkoutEntry(
     val notes: String,
 )
 
+/** Water is one running total per day rather than a list of log entries. */
+@Entity(tableName = "water")
+data class WaterDay(
+    @PrimaryKey val day: String,
+    val ml: Int,
+)
+
 @Dao
 interface LogDao {
     @Query("SELECT * FROM food WHERE day = :day ORDER BY time")
@@ -75,9 +83,24 @@ interface LogDao {
     @Insert suspend fun insertWorkouts(entries: List<WorkoutEntry>): List<Long>
     @Update suspend fun updateWorkout(entry: WorkoutEntry)
     @Delete suspend fun deleteWorkout(entry: WorkoutEntry)
+
+    @Query("SELECT ml FROM water WHERE day = :day")
+    fun waterMl(day: String): Flow<Int?>
+
+    @Query("INSERT OR IGNORE INTO water (day, ml) VALUES (:day, 0)")
+    suspend fun ensureWaterDay(day: String)
+
+    @Query("UPDATE water SET ml = MAX(0, ml + :deltaMl) WHERE day = :day")
+    suspend fun changeWaterMl(day: String, deltaMl: Int)
+
+    @Transaction
+    suspend fun addWater(day: String, deltaMl: Int) {
+        ensureWaterDay(day)
+        changeWaterMl(day, deltaMl)
+    }
 }
 
-@Database(entities = [FoodEntry::class, WorkoutEntry::class], version = 2, exportSchema = false)
+@Database(entities = [FoodEntry::class, WorkoutEntry::class, WaterDay::class], version = 3, exportSchema = false)
 abstract class AppDb : RoomDatabase() {
     abstract fun dao(): LogDao
 
@@ -88,9 +111,15 @@ abstract class AppDb : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `water` (`day` TEXT NOT NULL, `ml` INTEGER NOT NULL, PRIMARY KEY(`day`))")
+            }
+        }
+
         fun open(context: Context): AppDb =
             Room.databaseBuilder(context, AppDb::class.java, "macroman.db")
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build()
     }
 }
