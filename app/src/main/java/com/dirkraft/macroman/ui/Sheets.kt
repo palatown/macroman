@@ -74,7 +74,10 @@ fun FoodConfirmSheet(
                                     IconButton(onClick = { items.removeAt(i) }) { Icon(Icons.Default.Close, "Remove") }
                                 }
                             }
-                            Field("Amount", d.quantity, Modifier.fillMaxWidth()) { items[i] = d.copy(quantity = it) }
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Field("Amount", d.quantity, Modifier.weight(3f)) { items[i] = d.copy(quantity = it) }
+                                NumField("Weighed g", d.weighed, Modifier.weight(1.4f)) { items[i] = d.copy(weighed = it) }
+                            }
                             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 NumField("kcal", d.calories, Modifier.weight(1.2f)) { items[i] = d.copy(calories = it) }
                                 NumField("P", d.protein, Modifier.weight(1f), MacroColors.protein) { items[i] = d.copy(protein = it) }

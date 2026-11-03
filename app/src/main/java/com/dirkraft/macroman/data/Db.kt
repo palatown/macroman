@@ -11,6 +11,8 @@ import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.Update
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
 
 /** One logged food item. [day] is an ISO date (yyyy-MM-dd) so a day's log is a simple equality lookup. */
@@ -25,6 +27,8 @@ data class FoodEntry(
     val protein: Double,
     val carbs: Double,
     val fat: Double,
+    /** Grams from an actual scale, entered by the user. Never filled by the AI, so it can be compared with the estimate. */
+    val weighedGrams: Double? = null,
 )
 
 @Entity(tableName = "workout")
@@ -73,12 +77,20 @@ interface LogDao {
     @Delete suspend fun deleteWorkout(entry: WorkoutEntry)
 }
 
-@Database(entities = [FoodEntry::class, WorkoutEntry::class], version = 1)
+@Database(entities = [FoodEntry::class, WorkoutEntry::class], version = 2, exportSchema = false)
 abstract class AppDb : RoomDatabase() {
     abstract fun dao(): LogDao
 
     companion object {
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE food ADD COLUMN weighedGrams REAL")
+            }
+        }
+
         fun open(context: Context): AppDb =
-            Room.databaseBuilder(context, AppDb::class.java, "macroman.db").build()
+            Room.databaseBuilder(context, AppDb::class.java, "macroman.db")
+                .addMigrations(MIGRATION_1_2)
+                .build()
     }
 }
