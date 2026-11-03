@@ -33,6 +33,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.filled.Straighten
+import com.dirkraft.macroman.MainViewModel
 import com.dirkraft.macroman.data.Settings
 import com.dirkraft.macroman.data.Targets
 
@@ -46,8 +51,12 @@ private sealed interface KeyStatus {
 }
 
 @Composable
-fun SettingsScreen(settings: Settings, checkKey: suspend () -> String, modifier: Modifier) {
+fun SettingsScreen(vm: MainViewModel, modifier: Modifier) {
+    val settings = vm.settings
     var status by remember { mutableStateOf<KeyStatus>(KeyStatus.Empty) }
+    val pickHandPhoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) vm.measureHand(uri)
+    }
 
     // Re-check whenever the key or model changes, after typing/pasting settles.
     LaunchedEffect(settings.apiKey, settings.model) {
@@ -58,7 +67,7 @@ fun SettingsScreen(settings: Settings, checkKey: suspend () -> String, modifier:
         delay(600)
         status = KeyStatus.Checking
         status = try {
-            KeyStatus.Ok(checkKey())
+            KeyStatus.Ok(vm.checkKey())
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -109,6 +118,32 @@ fun SettingsScreen(settings: Settings, checkKey: suspend () -> String, modifier:
             label = { Text("Model") },
             supportingText = { Text("Default: ${Settings.DEFAULT_MODEL}") },
             singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        Text("Hand for scale", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
+        Text(
+            "Photograph your hand flat next to a tape measure, then pick that photo here. " +
+                "After that, keep your hand in food photos so Claude can judge portion sizes.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        OutlinedButton(
+            onClick = {
+                pickHandPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            },
+            enabled = !vm.busy,
+        ) {
+            if (vm.busy) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+            else Icon(Icons.Default.Straighten, null, Modifier.size(18.dp))
+            Text(if (vm.busy) "Measuring…" else "Measure from photo", Modifier.padding(start = 8.dp))
+        }
+        OutlinedTextField(
+            value = settings.handReference,
+            onValueChange = { settings.handReference = it },
+            label = { Text("Hand measurements") },
+            placeholder = { Text("e.g. Index fingertip to thumb tip spread: 15 cm (5.9 in)") },
+            minLines = 2,
             modifier = Modifier.fillMaxWidth(),
         )
 

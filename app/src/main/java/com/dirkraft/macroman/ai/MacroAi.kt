@@ -47,6 +47,7 @@ data class WorkoutItem(
 
 @Serializable private data class FoodResult(val items: List<FoodItem>)
 @Serializable private data class WorkoutResult(val items: List<WorkoutItem>)
+@Serializable private data class HandResult(val measurements: String)
 
 /** Turns free text and/or a photo into structured macros (or workout sets) with one Claude call. */
 class MacroAi(private val settings: Settings) {
@@ -87,31 +88,48 @@ class MacroAi(private val settings: Settings) {
 
     suspend fun parseFood(text: String, jpeg: ByteArray?): List<FoodItem> {
         val blocks = buildList {
-            if (jpeg != null) {
-                add(
-                    ContentBlockParam.ofImage(
-                        ImageBlockParam.builder()
-                            .source(
-                                Base64ImageSource.builder()
-                                    .data(Base64.getEncoder().encodeToString(jpeg))
-                                    .mediaType(Base64ImageSource.MediaType.IMAGE_JPEG)
-                                    .build()
-                            )
-                            .build()
-                    )
-                )
-            }
+            if (jpeg != null) add(image(jpeg))
             add(text(text.ifBlank { "Log what is in this photo." }))
         }
-        return json.decodeFromString<FoodResult>(ask(FOOD_SYSTEM, FOOD_SCHEMA, blocks)).items
+        val hand = settings.handReference.trim()
+        val system = if (hand.isEmpty()) FOOD_SYSTEM else "$FOOD_SYSTEM\n\n$HAND_SCALE\n$hand"
+        // Judging portion size from a photo is where extra thinking pays off; text stays fast.
+        val effort = if (jpeg != null) OutputConfig.Effort.HIGH else OutputConfig.Effort.LOW
+        return json.decodeFromString<FoodResult>(ask(system, FOOD_SCHEMA, blocks, effort)).items
     }
 
     suspend fun parseWorkout(text: String): List<WorkoutItem> =
-        json.decodeFromString<WorkoutResult>(ask(WORKOUT_SYSTEM, WORKOUT_SCHEMA, listOf(text(text)))).items
+        json.decodeFromString<WorkoutResult>(
+            ask(WORKOUT_SYSTEM, WORKOUT_SCHEMA, listOf(text(text)), OutputConfig.Effort.LOW)
+        ).items
+
+    /** Reads hand dimensions off a photo of the user's hand next to a tape measure or ruler. */
+    suspend fun measureHand(jpeg: ByteArray): String {
+        val blocks = listOf(image(jpeg), text("Measure my hand against the tape measure in this photo."))
+        val result = json.decodeFromString<HandResult>(ask(HAND_SYSTEM, HAND_SCHEMA, blocks, OutputConfig.Effort.HIGH))
+        if (result.measurements.isBlank()) throw IllegalStateException("Couldn't measure a hand against a ruler in that photo.")
+        return result.measurements.trim()
+    }
 
     private fun text(s: String) = ContentBlockParam.ofText(TextBlockParam.builder().text(s).build())
 
-    private suspend fun ask(system: String, schema: Map<String, Any>, blocks: List<ContentBlockParam>): String =
+    private fun image(jpeg: ByteArray) = ContentBlockParam.ofImage(
+        ImageBlockParam.builder()
+            .source(
+                Base64ImageSource.builder()
+                    .data(Base64.getEncoder().encodeToString(jpeg))
+                    .mediaType(Base64ImageSource.MediaType.IMAGE_JPEG)
+                    .build()
+            )
+            .build()
+    )
+
+    private suspend fun ask(
+        system: String,
+        schema: Map<String, Any>,
+        blocks: List<ContentBlockParam>,
+        effort: OutputConfig.Effort,
+    ): String =
         withContext(Dispatchers.IO) {
             val schemaParam = JsonOutputFormat.Schema.builder().apply {
                 schema.forEach { (k, v) -> putAdditionalProperty(k, JsonValue.from(v)) }
@@ -120,10 +138,9 @@ class MacroAi(private val settings: Settings) {
                 .model(settings.model.ifBlank { Settings.DEFAULT_MODEL })
                 .maxTokens(16000L)
                 .system(system)
-                // Estimating macros is a simple task: low effort keeps the round trip short.
                 .outputConfig(
                     OutputConfig.builder()
-                        .effort(OutputConfig.Effort.LOW)
+                        .effort(effort)
                         .format(JsonOutputFormat.builder().schema(schemaParam).build())
                         .build()
                 )
@@ -151,7 +168,31 @@ class MacroAi(private val settings: Settings) {
             - calories in kcal, macros in grams, rounded to whole numbers. Keep calories consistent with 4/4/9 kcal per g of protein/carbs/fat.
             - Keep "name" short (2-5 words), title case.
             - If the input does not describe food, return an empty list.
+            - For photos, estimate portions from the size of plates, bowls, cutlery, packaging and other objects of known size.
         """.trimIndent()
+
+        val HAND_SCALE = """
+            The user sometimes puts their own hand in the photo for scale. If a hand is visible,
+            use these measurements of it to size the food:
+        """.trimIndent()
+
+        val HAND_SYSTEM = """
+            The user wants a reference of their hand's dimensions, so that later food photos with
+            their hand in them can be used to judge portion sizes.
+            Measure every hand dimension you can read reliably against the tape measure or ruler in the photo,
+            e.g. fingertip-to-fingertip spans, finger lengths and widths, palm width and length.
+            - Read the scale carefully: note which side of the tape is inches and which is centimetres.
+            - Give each measurement in cm with inches in brackets, one per line, e.g. "Index fingertip to thumb tip spread: 15 cm (5.9 in)".
+            - Only include dimensions the ruler actually lets you measure; skip anything you would have to guess.
+            - If there is no hand or no readable ruler, return an empty string.
+        """.trimIndent()
+
+        val HAND_SCHEMA = mapOf(
+            "type" to "object",
+            "properties" to mapOf("measurements" to mapOf("type" to "string")),
+            "required" to listOf("measurements"),
+            "additionalProperties" to false,
+        )
 
         val WORKOUT_SYSTEM = """
             You are the logging engine of a strength-training log.

@@ -23,6 +23,9 @@ class Settings(context: Context) {
     var apiKey by pref("api_key", "")
     var model by pref("model", DEFAULT_MODEL)
 
+    /** Hand dimensions, one per line, sent with food photos so a hand in frame gives scale. */
+    var handReference by pref("hand_reference", "")
+
     private var trainingRaw by pref("targets_training", DEFAULT_TRAINING.encode())
     private var restRaw by pref("targets_rest", DEFAULT_REST.encode())
 

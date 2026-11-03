@@ -3,6 +3,8 @@ package com.dirkraft.macroman
 import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.media.ExifInterface
 import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -133,6 +135,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     suspend fun checkKey(): String = ai.check()
 
+    fun measureHand(photo: Uri) = run {
+        settings.handReference = ai.measureHand(loadJpeg(photo))
+    }
+
     fun editFood(entry: FoodEntry) { foodDrafts = listOf(entry.toDraft()) }
     fun editWorkout(entry: WorkoutEntry) { workoutDrafts = listOf(entry.toDraft()) }
 
@@ -196,9 +202,21 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     suspend fun undoFood(entry: FoodEntry) = dao.deleteFood(entry)
     suspend fun undoWorkout(entry: WorkoutEntry) = dao.deleteWorkout(entry)
 
-    /** Downscale so the long edge is at most 1568 px: the size Claude uses anyway, and far faster to upload. */
+    /**
+     * Downscale so the long edge is at most 1568 px: the size Claude uses anyway, and far faster to upload.
+     * Re-encoding from bare pixels also drops all EXIF metadata (GPS, timestamps, device), so only the
+     * image itself leaves the phone. The EXIF rotation is applied to the pixels first so it isn't lost.
+     */
     private suspend fun loadJpeg(uri: Uri): ByteArray = withContext(Dispatchers.IO) {
         val resolver = getApplication<Application>().contentResolver
+        val rotation = resolver.openInputStream(uri)?.use {
+            when (ExifInterface(it).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
+                ExifInterface.ORIENTATION_ROTATE_90 -> 90f
+                ExifInterface.ORIENTATION_ROTATE_180 -> 180f
+                ExifInterface.ORIENTATION_ROTATE_270 -> 270f
+                else -> 0f
+            }
+        } ?: 0f
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         resolver.openInputStream(uri).use { BitmapFactory.decodeStream(it, null, bounds) }
         val longEdge = maxOf(bounds.outWidth, bounds.outHeight)
@@ -207,9 +225,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         val decoded = resolver.openInputStream(uri).use {
             BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = sample })
         } ?: throw IllegalStateException("Couldn't read the photo.")
-        val scale = MAX_EDGE.toFloat() / maxOf(decoded.width, decoded.height)
-        val bitmap = if (scale < 1f) {
-            Bitmap.createScaledBitmap(decoded, (decoded.width * scale).toInt(), (decoded.height * scale).toInt(), true)
+        val scale = minOf(1f, MAX_EDGE.toFloat() / maxOf(decoded.width, decoded.height))
+        val bitmap = if (scale < 1f || rotation != 0f) {
+            val matrix = Matrix().apply {
+                postScale(scale, scale)
+                postRotate(rotation)
+            }
+            Bitmap.createBitmap(decoded, 0, 0, decoded.width, decoded.height, matrix, true)
         } else decoded
         ByteArrayOutputStream().use { out ->
             bitmap.compress(Bitmap.CompressFormat.JPEG, 85, out)
