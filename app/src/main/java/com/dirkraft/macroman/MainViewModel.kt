@@ -131,6 +131,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         if (items.isEmpty()) error = "Couldn't find any exercises in that." else workoutDrafts = items.map { it.toDraft() }
     }
 
+    suspend fun checkKey(): String = ai.check()
+
     fun editFood(entry: FoodEntry) { foodDrafts = listOf(entry.toDraft()) }
     fun editWorkout(entry: WorkoutEntry) { workoutDrafts = listOf(entry.toDraft()) }
 

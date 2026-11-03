@@ -3,6 +3,11 @@ package com.dirkraft.macroman.ai
 import com.anthropic.client.AnthropicClient
 import com.anthropic.client.okhttp.AnthropicOkHttpClient
 import com.anthropic.core.JsonValue
+import com.anthropic.errors.AnthropicIoException
+import com.anthropic.errors.AnthropicServiceException
+import com.anthropic.errors.NotFoundException
+import com.anthropic.errors.PermissionDeniedException
+import com.anthropic.errors.UnauthorizedException
 import com.anthropic.models.messages.Base64ImageSource
 import com.anthropic.models.messages.ContentBlockParam
 import com.anthropic.models.messages.ImageBlockParam
@@ -57,6 +62,27 @@ class MacroAi(private val settings: Settings) {
             clientKey = key
         }
         return client!!
+    }
+
+    /**
+     * Checks the key and model with a Models API lookup, which costs no tokens.
+     * Returns the model's display name on success, or throws with a message fit to show the user.
+     */
+    suspend fun check(): String = withContext(Dispatchers.IO) {
+        val model = settings.model.ifBlank { Settings.DEFAULT_MODEL }
+        try {
+            client().models().retrieve(model).displayName()
+        } catch (e: UnauthorizedException) {
+            throw IllegalStateException("Key not recognised")
+        } catch (e: PermissionDeniedException) {
+            throw IllegalStateException("Key doesn't have access")
+        } catch (e: NotFoundException) {
+            throw IllegalStateException("Key works, but model \"$model\" wasn't found")
+        } catch (e: AnthropicServiceException) {
+            throw IllegalStateException("Anthropic returned an error (${e.statusCode()})")
+        } catch (e: AnthropicIoException) {
+            throw IllegalStateException("Couldn't reach Anthropic. Check your connection.")
+        }
     }
 
     suspend fun parseFood(text: String, jpeg: ByteArray?): List<FoodItem> {

@@ -98,7 +98,7 @@ private fun App(vm: MainViewModel) {
         when (tab) {
             Tab.Food -> FoodScreen(vm, snackbar, modifier)
             Tab.Workout -> WorkoutScreen(vm, snackbar, modifier)
-            Tab.Settings -> SettingsScreen(vm.settings, modifier)
+            Tab.Settings -> SettingsScreen(vm.settings, vm::checkKey, modifier)
         }
     }
 }

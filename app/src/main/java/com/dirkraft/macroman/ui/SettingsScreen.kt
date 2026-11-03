@@ -8,9 +8,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -27,19 +38,62 @@ import com.dirkraft.macroman.data.Targets
 
 private const val CONSOLE_KEYS_URL = "https://console.anthropic.com/settings/keys"
 
+private sealed interface KeyStatus {
+    data object Empty : KeyStatus
+    data object Checking : KeyStatus
+    data class Ok(val model: String) : KeyStatus
+    data class Failed(val message: String) : KeyStatus
+}
+
 @Composable
-fun SettingsScreen(settings: Settings, modifier: Modifier) {
+fun SettingsScreen(settings: Settings, checkKey: suspend () -> String, modifier: Modifier) {
+    var status by remember { mutableStateOf<KeyStatus>(KeyStatus.Empty) }
+
+    // Re-check whenever the key or model changes, after typing/pasting settles.
+    LaunchedEffect(settings.apiKey, settings.model) {
+        if (settings.apiKey.isBlank()) {
+            status = KeyStatus.Empty
+            return@LaunchedEffect
+        }
+        delay(600)
+        status = KeyStatus.Checking
+        status = try {
+            KeyStatus.Ok(checkKey())
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            KeyStatus.Failed(e.message ?: "Check failed")
+        }
+    }
+
     Column(
         modifier.verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text("Settings", style = MaterialTheme.typography.headlineSmall)
 
+        val good = Color(0xFF2E7D32)
         OutlinedTextField(
             value = settings.apiKey,
             onValueChange = { settings.apiKey = it.trim() },
             label = { Text("Anthropic API key") },
-            supportingText = { Text("Stored only on this phone.") },
+            supportingText = {
+                when (val s = status) {
+                    KeyStatus.Empty -> Text("Stored only on this phone.")
+                    KeyStatus.Checking -> Text("Checking key…")
+                    is KeyStatus.Ok -> Text("Key works · ${s.model}", color = good)
+                    is KeyStatus.Failed -> Text(s.message, color = MaterialTheme.colorScheme.error)
+                }
+            },
+            trailingIcon = {
+                when (status) {
+                    KeyStatus.Empty -> {}
+                    KeyStatus.Checking -> CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                    is KeyStatus.Ok -> Icon(Icons.Default.CheckCircle, "Key works", tint = good)
+                    is KeyStatus.Failed -> Icon(Icons.Default.Error, "Key problem", tint = MaterialTheme.colorScheme.error)
+                }
+            },
+            isError = status is KeyStatus.Failed,
             visualTransformation = PasswordVisualTransformation(),
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
