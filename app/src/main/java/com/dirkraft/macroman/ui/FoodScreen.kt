@@ -2,7 +2,28 @@ package com.dirkraft.macroman.ui
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import android.util.Size
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -61,12 +82,33 @@ fun FoodScreen(vm: MainViewModel, snackbar: SnackbarHostState, modifier: Modifie
         val file = File(context.cacheDir, "photos/capture.jpg").apply { parentFile?.mkdirs() }
         FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
     }
+    // The photo is attached rather than sent, so a note can be typed or spoken to go with it.
+    var photoAttached by rememberSaveable { mutableStateOf(false) }
+    var thumbnail by remember { mutableStateOf<ImageBitmap?>(null) }
     val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok ->
-        if (ok) vm.analyzeFood(text, photoUri)
+        if (ok) {
+            photoAttached = true
+            thumbnail = null
+        }
+    }
+    LaunchedEffect(photoAttached, thumbnail) {
+        if (photoAttached && thumbnail == null) {
+            thumbnail = withContext(Dispatchers.IO) {
+                runCatching {
+                    context.contentResolver.loadThumbnail(photoUri, Size(256, 256), null).asImageBitmap()
+                }.getOrNull()
+            }
+        }
     }
 
-    // A successful analysis opens the confirm sheet; the typed text has done its job.
-    LaunchedEffect(vm.foodDrafts) { if (vm.foodDrafts != null) text = "" }
+    // A successful analysis opens the confirm sheet; the text and photo have done their job.
+    LaunchedEffect(vm.foodDrafts) {
+        if (vm.foodDrafts != null) {
+            text = ""
+            photoAttached = false
+            thumbnail = null
+        }
+    }
 
     Column(modifier) {
         DayBar(day, vm::shiftDay, vm::today, trailing = if (training) "Training day" else "Rest day")
@@ -111,10 +153,17 @@ fun FoodScreen(vm: MainViewModel, snackbar: SnackbarHostState, modifier: Modifie
             hint = "What did you eat?",
             busy = vm.busy,
             autoFocus = true,
-            onSend = { vm.analyzeFood(it) },
-            onCamera = { camera.launch(photoUri) },
+            onSend = { vm.analyzeFood(it, if (photoAttached) photoUri else null) },
+            onCamera = if (photoAttached) null else ({ camera.launch(photoUri) }),
             text = text,
             onText = { text = it },
+            attachment = if (!photoAttached) null else ({
+                PhotoChip(thumbnail, enabled = !vm.busy) {
+                    photoAttached = false
+                    thumbnail = null
+                }
+            }),
+            sendable = photoAttached || text.isNotBlank(),
         )
     }
 
@@ -125,6 +174,33 @@ fun FoodScreen(vm: MainViewModel, snackbar: SnackbarHostState, modifier: Modifie
             onDelete = { id -> vm.deleteFood(id); vm.foodDrafts = null },
             onDismiss = { vm.foodDrafts = null },
         )
+    }
+}
+
+@Composable
+private fun PhotoChip(thumbnail: ImageBitmap?, enabled: Boolean, onRemove: () -> Unit) {
+    Box {
+        Box(
+            Modifier.size(72.dp).clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (thumbnail != null) {
+                Image(thumbnail, "Attached photo", Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            } else {
+                CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+            }
+        }
+        if (enabled) {
+            Box(
+                Modifier.align(Alignment.TopEnd).padding(2.dp).size(24.dp).clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.inverseSurface)
+                    .clickable(onClick = onRemove),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Icons.Default.Close, "Remove photo", Modifier.size(16.dp), tint = MaterialTheme.colorScheme.inverseOnSurface)
+            }
+        }
     }
 }
 

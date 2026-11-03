@@ -5,6 +5,8 @@ import android.speech.RecognizerIntent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -88,6 +90,10 @@ fun InputBar(
     onCamera: (() -> Unit)? = null,
     text: String,
     onText: (String) -> Unit,
+    /** Shown above the text field, e.g. an attached photo. */
+    attachment: (@Composable () -> Unit)? = null,
+    /** Whether Send is allowed; an attached photo makes an empty message sendable. */
+    sendable: Boolean = text.isNotBlank(),
 ) {
     val focus = remember { FocusRequester() }
     val speech = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -100,37 +106,46 @@ fun InputBar(
     if (autoFocus) LaunchedEffect(Unit) { focus.requestFocus() }
 
     Surface(tonalElevation = 3.dp) {
-        Row(
-            Modifier.fillMaxWidth().padding(start = 12.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
-            OutlinedTextField(
-                value = text,
-                onValueChange = onText,
-                modifier = Modifier.weight(1f).focusRequester(focus),
-                placeholder = { Text(hint) },
-                maxLines = 4,
-                enabled = !busy,
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Sentences,
-                    imeAction = ImeAction.Send,
-                ),
-                keyboardActions = KeyboardActions(onSend = { if (text.isNotBlank()) onSend(text) }),
-            )
-            if (busy) {
-                CircularProgressIndicator(Modifier.padding(12.dp).size(24.dp), strokeWidth = 3.dp)
-            } else if (text.isNotBlank()) {
-                FilledIconButton(onClick = { onSend(text) }) { Icon(Icons.AutoMirrored.Filled.Send, "Send") }
-            } else {
-                IconButton(onClick = {
-                    val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
-                        .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                    runCatching { speech.launch(intent) }
-                }) { Icon(Icons.Default.Mic, "Speak") }
+        Column {
+            if (attachment != null) {
+                Box(Modifier.padding(start = 12.dp, top = 8.dp)) { attachment() }
             }
-            if (onCamera != null && !busy) {
-                IconButton(onClick = onCamera) { Icon(Icons.Default.PhotoCamera, "Photo") }
+            Row(
+                Modifier.fillMaxWidth().padding(start = 12.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = onText,
+                    modifier = Modifier.weight(1f).focusRequester(focus),
+                    placeholder = { Text(hint) },
+                    maxLines = 4,
+                    enabled = !busy,
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Sentences,
+                        imeAction = ImeAction.Send,
+                    ),
+                    keyboardActions = KeyboardActions(onSend = { if (sendable) onSend(text) }),
+                )
+                if (busy) {
+                    CircularProgressIndicator(Modifier.padding(12.dp).size(24.dp), strokeWidth = 3.dp)
+                } else {
+                    // Mic stays available until something is typed, so a photo can still get a spoken note.
+                    if (text.isBlank()) {
+                        IconButton(onClick = {
+                            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+                                .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                            runCatching { speech.launch(intent) }
+                        }) { Icon(Icons.Default.Mic, "Speak") }
+                    }
+                    if (onCamera != null) {
+                        IconButton(onClick = onCamera) { Icon(Icons.Default.PhotoCamera, "Photo") }
+                    }
+                    if (sendable) {
+                        FilledIconButton(onClick = { onSend(text) }) { Icon(Icons.AutoMirrored.Filled.Send, "Send") }
+                    }
+                }
             }
         }
     }
