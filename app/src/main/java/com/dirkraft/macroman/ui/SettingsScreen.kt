@@ -5,6 +5,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -19,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import com.dirkraft.macroman.data.Settings
 import com.dirkraft.macroman.data.Targets
 
+private const val CONSOLE_KEYS_URL = "https://console.anthropic.com/settings/keys"
+
 @Composable
 fun SettingsScreen(settings: Settings, modifier: Modifier) {
     Column(
@@ -31,11 +39,16 @@ fun SettingsScreen(settings: Settings, modifier: Modifier) {
             value = settings.apiKey,
             onValueChange = { settings.apiKey = it.trim() },
             label = { Text("Anthropic API key") },
-            supportingText = { Text("Stored only on this phone. Get one at console.anthropic.com.") },
+            supportingText = { Text("Stored only on this phone.") },
             visualTransformation = PasswordVisualTransformation(),
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
+        val uriHandler = LocalUriHandler.current
+        OutlinedButton(onClick = { uriHandler.openUri(CONSOLE_KEYS_URL) }) {
+            Icon(Icons.AutoMirrored.Filled.OpenInNew, null, Modifier.size(18.dp))
+            Text("Get an API key", Modifier.padding(start = 8.dp))
+        }
         OutlinedTextField(
             value = settings.model,
             onValueChange = { settings.model = it.trim() },
