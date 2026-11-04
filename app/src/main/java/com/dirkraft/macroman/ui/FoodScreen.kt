@@ -306,14 +306,6 @@ private fun FoodRow(entry: FoodEntry, onClick: () -> Unit) {
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            // Shown under the estimate so the two can be compared at a glance.
-            entry.weighedGrams?.let { g ->
-                Text(
-                    "Weighed ${g.roundToInt()} g",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
         }
         Column(horizontalAlignment = Alignment.End) {
             Text("${entry.calories.roundToInt()} kcal", style = MaterialTheme.typography.bodyMedium)

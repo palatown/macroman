@@ -28,8 +28,6 @@ data class FoodEntry(
     val protein: Double,
     val carbs: Double,
     val fat: Double,
-    /** Grams from an actual scale, entered by the user. Never filled by the AI, so it can be compared with the estimate. */
-    val weighedGrams: Double? = null,
 )
 
 @Entity(tableName = "workout")
@@ -100,7 +98,7 @@ interface LogDao {
     }
 }
 
-@Database(entities = [FoodEntry::class, WorkoutEntry::class, WaterDay::class], version = 3, exportSchema = false)
+@Database(entities = [FoodEntry::class, WorkoutEntry::class, WaterDay::class], version = 4, exportSchema = false)
 abstract class AppDb : RoomDatabase() {
     abstract fun dao(): LogDao
 
@@ -117,9 +115,20 @@ abstract class AppDb : RoomDatabase() {
             }
         }
 
+        /** Drops the scale-weight column; readings already recorded move into the amount text so they aren't lost. */
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """UPDATE food SET quantity = TRIM(quantity || ' (weighed ' || printf('%g', weighedGrams) || ' g)')
+                       WHERE weighedGrams IS NOT NULL"""
+                )
+                db.execSQL("ALTER TABLE food DROP COLUMN weighedGrams")
+            }
+        }
+
         fun open(context: Context): AppDb =
             Room.databaseBuilder(context, AppDb::class.java, "macroman.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                 .build()
     }
 }

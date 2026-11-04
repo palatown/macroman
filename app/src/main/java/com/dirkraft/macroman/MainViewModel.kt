@@ -38,8 +38,6 @@ data class FoodDraft(
     val protein: String,
     val carbs: String,
     val fat: String,
-    /** Scale weight in grams; only ever typed by the user. */
-    val weighed: String = "",
 )
 
 data class WorkoutDraft(
@@ -57,9 +55,7 @@ private fun Double.fmt() = if (this % 1.0 == 0.0) toLong().toString() else "%.1f
 private fun String.num() = trim().toDoubleOrNull() ?: 0.0
 
 fun FoodItem.toDraft() = FoodDraft(0, name, quantity, calories.fmt(), protein.fmt(), carbs.fmt(), fat.fmt())
-fun FoodEntry.toDraft() = FoodDraft(
-    id, name, quantity, calories.fmt(), protein.fmt(), carbs.fmt(), fat.fmt(), weighedGrams?.fmt() ?: "",
-)
+fun FoodEntry.toDraft() = FoodDraft(id, name, quantity, calories.fmt(), protein.fmt(), carbs.fmt(), fat.fmt())
 fun WorkoutItem.toDraft() = WorkoutDraft(
     0, exercise, sets.toString(), reps.toString(), weight.fmt(), unit, durationMin.fmt(), notes,
 )
@@ -164,7 +160,6 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 FoodEntry(
                     id = d.id, day = dayKey, time = time, name = d.name.trim(), quantity = d.quantity.trim(),
                     calories = d.calories.num(), protein = d.protein.num(), carbs = d.carbs.num(), fat = d.fat.num(),
-                    weighedGrams = d.weighed.trim().toDoubleOrNull()?.takeIf { it > 0 },
                 )
             }.partition { it.id != 0L }
             // Edits keep their original day and time.
@@ -196,8 +191,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     /** One-tap re-log of a previous entry onto the selected day. Returns the new row so it can be undone. */
     suspend fun relogFood(entry: FoodEntry): FoodEntry {
-        // A scale reading belongs to one serving; the re-logged serving hasn't been weighed.
-        val copy = entry.copy(id = 0, day = day.value.toString(), time = stamp(), weighedGrams = null)
+        val copy = entry.copy(id = 0, day = day.value.toString(), time = stamp())
         return copy.copy(id = dao.insertFood(listOf(copy)).first())
     }
 
