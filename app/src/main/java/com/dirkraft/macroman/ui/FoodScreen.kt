@@ -87,13 +87,15 @@ fun FoodScreen(vm: MainViewModel, snackbar: SnackbarHostState, modifier: Modifie
         val file = File(context.cacheDir, "photos/capture.jpg").apply { parentFile?.mkdirs() }
         FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
     }
-    // The photo is attached rather than sent, so a note can be typed or spoken to go with it.
+    // Taking the picture sends it, along with any text already entered. It stays attached until
+    // the analysis succeeds, so a failed attempt can be retried without retaking the photo.
     var photoAttached by rememberSaveable { mutableStateOf(false) }
     var thumbnail by remember { mutableStateOf<ImageBitmap?>(null) }
     val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok ->
         if (ok) {
             photoAttached = true
             thumbnail = null
+            vm.analyzeFood(text, photoUri)
         }
     }
     LaunchedEffect(photoAttached, thumbnail) {

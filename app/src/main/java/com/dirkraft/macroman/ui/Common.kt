@@ -131,7 +131,7 @@ fun InputBar(
                 if (busy) {
                     CircularProgressIndicator(Modifier.padding(12.dp).size(24.dp), strokeWidth = 3.dp)
                 } else {
-                    // Mic stays available until something is typed, so a photo can still get a spoken note.
+                    // Mic stays available until something is typed, so a photo retry can still get a spoken note.
                     if (text.isBlank()) {
                         IconButton(onClick = {
                             val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
