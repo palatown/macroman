@@ -32,6 +32,7 @@ data class FoodItem(
     @SerialName("protein_g") val protein: Double,
     @SerialName("carbs_g") val carbs: Double,
     @SerialName("fat_g") val fat: Double,
+    @SerialName("fiber_g") val fiber: Double,
 )
 
 @Serializable
@@ -166,6 +167,7 @@ class MacroAi(private val settings: Settings) {
             - If a nutrition label is visible, use its exact values scaled to the amount eaten.
             - For branded or restaurant items, use the known published nutrition when you know it.
             - calories in kcal, macros in grams, rounded to whole numbers. Keep calories consistent with 4/4/9 kcal per g of protein/carbs/fat.
+            - carbs_g is total carbohydrate including fiber, and fiber_g is the dietary fiber within it, so fiber_g never exceeds carbs_g. If a label lists carbohydrates excluding fiber, as EU labels do, add the fiber to carbs_g.
             - Keep "name" short (2-5 words), title case.
             - If the input does not describe food, return an empty list.
             - For photos, estimate portions from the size of plates, bowls, cutlery, packaging and other objects of known size.
@@ -222,7 +224,7 @@ class MacroAi(private val settings: Settings) {
         val FOOD_SCHEMA = list(
             obj(
                 "name" to "string", "quantity" to "string", "calories" to "number",
-                "protein_g" to "number", "carbs_g" to "number", "fat_g" to "number",
+                "protein_g" to "number", "carbs_g" to "number", "fat_g" to "number", "fiber_g" to "number",
             )
         )
 

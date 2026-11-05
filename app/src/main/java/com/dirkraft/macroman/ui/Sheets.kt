@@ -59,7 +59,7 @@ fun FoodConfirmSheet(
                 style = MaterialTheme.typography.titleLarge,
             )
             Text(
-                "${total { it.calories }} kcal · P ${total { it.protein }} · C ${total { it.carbs }} · F ${total { it.fat }}",
+                "${total { it.calories }} kcal · P ${total { it.protein }} · C ${total { it.carbs }} (fiber ${total { it.fiber }}) · F ${total { it.fat }}",
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(vertical = 4.dp),
@@ -74,7 +74,10 @@ fun FoodConfirmSheet(
                                     IconButton(onClick = { items.removeAt(i) }) { Icon(Icons.Default.Close, "Remove") }
                                 }
                             }
-                            Field("Amount", d.quantity, Modifier.fillMaxWidth()) { items[i] = d.copy(quantity = it) }
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Field("Amount", d.quantity, Modifier.weight(3f)) { items[i] = d.copy(quantity = it) }
+                                NumField("Fiber g", d.fiber, Modifier.weight(1.4f), MacroColors.carbs) { items[i] = d.copy(fiber = it) }
+                            }
                             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 NumField("kcal", d.calories, Modifier.weight(1.2f)) { items[i] = d.copy(calories = it) }
                                 NumField("P", d.protein, Modifier.weight(1f), MacroColors.protein) { items[i] = d.copy(protein = it) }

@@ -1,6 +1,7 @@
 package com.dirkraft.macroman.data
 
 import android.content.Context
+import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Delete
@@ -28,6 +29,8 @@ data class FoodEntry(
     val protein: Double,
     val carbs: Double,
     val fat: Double,
+    /** Grams of fiber, counted within [carbs] rather than on top of it. */
+    @ColumnInfo(defaultValue = "0") val fiber: Double = 0.0,
 )
 
 @Entity(tableName = "workout")
@@ -98,7 +101,7 @@ interface LogDao {
     }
 }
 
-@Database(entities = [FoodEntry::class, WorkoutEntry::class, WaterDay::class], version = 4, exportSchema = false)
+@Database(entities = [FoodEntry::class, WorkoutEntry::class, WaterDay::class], version = 5, exportSchema = false)
 abstract class AppDb : RoomDatabase() {
     abstract fun dao(): LogDao
 
@@ -126,9 +129,15 @@ abstract class AppDb : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE food ADD COLUMN fiber REAL NOT NULL DEFAULT 0")
+            }
+        }
+
         fun open(context: Context): AppDb =
             Room.databaseBuilder(context, AppDb::class.java, "macroman.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .build()
     }
 }

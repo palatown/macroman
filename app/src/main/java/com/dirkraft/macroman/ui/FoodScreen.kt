@@ -224,7 +224,7 @@ private fun MacroSummary(food: List<FoodEntry>, t: Targets, waterMl: Int, onWate
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             MacroBar("Protein", p, t.protein, "g", MacroColors.protein)
-            MacroBar("Carbs", c, t.carbs, "g", MacroColors.carbs)
+            MacroBar("Carbs", c, t.carbs, "g", MacroColors.carbs, fiber = food.sumOf { it.fiber })
             MacroBar("Fat", f, t.fat, "g", MacroColors.fat)
             MacroBar("Calories", kcal, t.calories, "", MaterialTheme.colorScheme.primary)
         }
@@ -262,14 +262,23 @@ object MacroColors {
     val protein = Color(0xFFE57373)
     val carbs = Color(0xFF64B5F6)
     val fat = Color(0xFFFFB74D)
+    /** A darker carbs blue, because fiber is drawn as a portion of the carbs bar. */
+    val fiber = Color(0xFF1565C0)
 }
 
 @Composable
-private fun MacroBar(label: String, value: Double, target: Int, unit: String, color: Color) {
+private fun MacroBar(label: String, value: Double, target: Int, unit: String, color: Color, fiber: Double? = null) {
     val left = target - value.roundToInt()
+    val share = { amount: Double -> if (target > 0) (amount / target).toFloat().coerceIn(0f, 1f) else 0f }
     Column {
         Row(verticalAlignment = Alignment.Bottom) {
-            Text(label, style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
+            Text(
+                if (fiber != null) "$label · ${fiber.roundToInt()} fiber" else label,
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.weight(1f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
             Text(
                 "${value.roundToInt()} / $target$unit",
                 style = MaterialTheme.typography.labelLarge,
@@ -281,13 +290,25 @@ private fun MacroBar(label: String, value: Double, target: Int, unit: String, co
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        LinearProgressIndicator(
-            progress = { if (target > 0) (value / target).toFloat().coerceIn(0f, 1f) else 0f },
-            modifier = Modifier.fillMaxWidth().height(8.dp).padding(top = 2.dp),
-            color = color,
-            trackColor = color.copy(alpha = 0.2f),
-            drawStopIndicator = {},
-        )
+        Box {
+            LinearProgressIndicator(
+                progress = { share(value) },
+                modifier = Modifier.fillMaxWidth().height(8.dp).padding(top = 2.dp),
+                color = color,
+                trackColor = color.copy(alpha = 0.2f),
+                drawStopIndicator = {},
+            )
+            // Fiber is part of the carbs, so it's drawn inside that bar rather than added to it.
+            if (fiber != null && fiber > 0) {
+                LinearProgressIndicator(
+                    progress = { share(minOf(fiber, value)) },
+                    modifier = Modifier.fillMaxWidth().height(8.dp).padding(top = 2.dp),
+                    color = MacroColors.fiber,
+                    trackColor = Color.Transparent,
+                    drawStopIndicator = {},
+                )
+            }
+        }
     }
 }
 
@@ -311,7 +332,11 @@ private fun FoodRow(entry: FoodEntry, onClick: () -> Unit) {
             Text("${entry.calories.roundToInt()} kcal", style = MaterialTheme.typography.bodyMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("P ${entry.protein.roundToInt()}", color = MacroColors.protein, style = MaterialTheme.typography.labelMedium)
-                Text("C ${entry.carbs.roundToInt()}", color = MacroColors.carbs, style = MaterialTheme.typography.labelMedium)
+                Text(
+                    "C ${entry.carbs.roundToInt()}" + if (entry.fiber > 0) " (${entry.fiber.roundToInt()} fiber)" else "",
+                    color = MacroColors.carbs,
+                    style = MaterialTheme.typography.labelMedium,
+                )
                 Text("F ${entry.fat.roundToInt()}", color = MacroColors.fat, style = MaterialTheme.typography.labelMedium)
             }
         }
