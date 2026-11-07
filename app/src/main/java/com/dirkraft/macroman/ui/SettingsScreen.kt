@@ -42,6 +42,7 @@ import com.dirkraft.macroman.data.Settings
 import com.dirkraft.macroman.data.Targets
 
 private const val CONSOLE_KEYS_URL = "https://console.anthropic.com/settings/keys"
+private const val CONSOLE_BILLING_URL = "https://platform.claude.com/settings/billing"
 
 private sealed interface KeyStatus {
     data object Empty : KeyStatus
@@ -112,6 +113,11 @@ fun SettingsScreen(vm: MainViewModel, modifier: Modifier) {
             Icon(Icons.AutoMirrored.Filled.OpenInNew, null, Modifier.size(18.dp))
             Text("Get an API key", Modifier.padding(start = 8.dp))
         }
+        // A normal API key can't read its credit balance, so this opens the page that shows it.
+        OutlinedButton(onClick = { uriHandler.openUri(CONSOLE_BILLING_URL) }) {
+            Icon(Icons.AutoMirrored.Filled.OpenInNew, null, Modifier.size(18.dp))
+            Text("Check credits and usage", Modifier.padding(start = 8.dp))
+        }
         OutlinedTextField(
             value = settings.model,
             onValueChange = { settings.model = it.trim() },
@@ -147,13 +153,7 @@ fun SettingsScreen(vm: MainViewModel, modifier: Modifier) {
             modifier = Modifier.fillMaxWidth(),
         )
 
-        TargetsEditor("Training day targets", settings.trainingTargets) { settings.trainingTargets = it }
-        TargetsEditor("Rest day targets", settings.restTargets) { settings.restTargets = it }
-        Text(
-            "A day counts as a training day as soon as any workout is logged on it.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        TargetsEditor("Daily targets", settings.targets) { settings.targets = it }
     }
 }
 

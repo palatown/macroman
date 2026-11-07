@@ -26,16 +26,12 @@ class Settings(context: Context) {
     /** Hand dimensions, one per line, sent with food photos so a hand in frame gives scale. */
     var handReference by pref("hand_reference", "")
 
-    private var trainingRaw by pref("targets_training", DEFAULT_TRAINING.encode())
-    private var restRaw by pref("targets_rest", DEFAULT_REST.encode())
+    // Stored under the old rest day key, which is what carries the existing values over.
+    private var targetsRaw by pref("targets_rest", DEFAULT_TARGETS.encode())
 
-    var trainingTargets: Targets
-        get() = Targets.decode(trainingRaw, DEFAULT_TRAINING)
-        set(v) { trainingRaw = v.encode() }
-
-    var restTargets: Targets
-        get() = Targets.decode(restRaw, DEFAULT_REST)
-        set(v) { restRaw = v.encode() }
+    var targets: Targets
+        get() = Targets.decode(targetsRaw, DEFAULT_TARGETS)
+        set(v) { targetsRaw = v.encode() }
 
     private fun pref(key: String, default: String) = object {
         private val state = mutableStateOf(prefs.getString(key, default) ?: default)
@@ -49,7 +45,6 @@ class Settings(context: Context) {
     companion object {
         const val DEFAULT_MODEL = "claude-opus-5-5"
         // Lean-gain starting points for roughly an 80 kg lifter; meant to be tuned in Settings.
-        val DEFAULT_TRAINING = Targets(calories = 2700, protein = 180, carbs = 300, fat = 75)
-        val DEFAULT_REST = Targets(calories = 2400, protein = 180, carbs = 220, fat = 80)
+        val DEFAULT_TARGETS = Targets(calories = 2400, protein = 180, carbs = 220, fat = 80)
     }
 }

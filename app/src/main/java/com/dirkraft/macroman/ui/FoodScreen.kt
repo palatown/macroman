@@ -72,16 +72,11 @@ import kotlin.math.roundToInt
 fun FoodScreen(vm: MainViewModel, snackbar: SnackbarHostState, modifier: Modifier) {
     val day by vm.day.collectAsStateWithLifecycle()
     val food by vm.food.collectAsStateWithLifecycle()
-    val workouts by vm.workouts.collectAsStateWithLifecycle()
     val frequent by vm.frequentFood.collectAsStateWithLifecycle()
     val waterMl by vm.waterMl.collectAsStateWithLifecycle()
     var text by rememberInputText()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-
-    // Any workout logged on the day makes it a training day: no extra toggle to remember.
-    val training = workouts.isNotEmpty()
-    val targets = if (training) vm.settings.trainingTargets else vm.settings.restTargets
 
     val photoUri = androidx.compose.runtime.remember {
         val file = File(context.cacheDir, "photos/capture.jpg").apply { parentFile?.mkdirs() }
@@ -118,8 +113,8 @@ fun FoodScreen(vm: MainViewModel, snackbar: SnackbarHostState, modifier: Modifie
     }
 
     Column(modifier) {
-        DayBar(day, vm::shiftDay, vm::today, trailing = if (training) "Training day" else "Rest day")
-        MacroSummary(food, targets, waterMl, vm::addWater)
+        DayBar(day, vm::shiftDay, vm::today)
+        MacroSummary(food, vm.settings.targets, waterMl, vm::addWater)
         if (frequent.isNotEmpty()) {
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 12.dp),

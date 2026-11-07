@@ -47,7 +47,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun DayBar(day: LocalDate, onShift: (Long) -> Unit, onToday: () -> Unit, trailing: String? = null) {
+fun DayBar(day: LocalDate, onShift: (Long) -> Unit, onToday: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -64,15 +64,6 @@ fun DayBar(day: LocalDate, onShift: (Long) -> Unit, onToday: () -> Unit, trailin
         }
         IconButton(onClick = { onShift(1) }, enabled = day < today) {
             Icon(Icons.Default.ChevronRight, "Next day")
-        }
-        if (trailing != null) {
-            Text(
-                trailing,
-                Modifier.weight(1f).padding(end = 12.dp),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
-                textAlign = androidx.compose.ui.text.style.TextAlign.End,
-            )
         }
     }
 }
