@@ -7,7 +7,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.Slider
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -41,6 +46,64 @@ import kotlin.math.roundToInt
  * Review step between the AI guess and the log. For a fresh guess Save is one tap; every number
  * stays editable. Opening an existing entry reuses the same sheet with a Delete button.
  */
+private const val MIN_SCALE = 0.5f
+private const val MAX_SCALE = 2f
+private const val SCALE_STEP = 0.25f
+
+/**
+ * One row of the confirm sheet plus its portion slider. Numbers follow the slider from [base] (the 1x values),
+ * so dragging back and forth never drifts. The amount text needs Claude to rewrite, so it only catches up on
+ * release: [amount] is the last good text and [amountScale] the slider position it was written for.
+ */
+private data class ScaledFood(
+    val key: Int,
+    val shown: FoodDraft,
+    val base: List<Double>,
+    val scale: Float = 1f,
+    val amount: String = shown.quantity,
+    val amountScale: Float = 1f,
+) {
+    /** What the Amount field shows: the good text, marked with the pending factor until the rewrite lands. */
+    val amountShown: String
+        get() = if (scale == amountScale) amount else "$amount ×${fmtScale(scale / amountScale)}"
+
+    fun draft() = shown.copy(quantity = amountShown)
+
+    fun scaledTo(s: Float): ScaledFood {
+        val v = base.map { it * s }
+        return copy(
+            scale = s,
+            shown = shown.copy(
+                calories = fmtNum(v[0], 0), protein = fmtNum(v[1]), carbs = fmtNum(v[2]),
+                fat = fmtNum(v[3]), fiber = fmtNum(v[4]),
+            ),
+        )
+    }
+
+    /** A typed number stays as typed; its 1x base is back-computed so the slider continues from it. */
+    fun typed(field: Int, text: String, set: (FoodDraft, String) -> FoodDraft) = copy(
+        shown = set(shown, text),
+        base = base.toMutableList().also { it[field] = (text.toDoubleOrNull() ?: 0.0) / scale },
+    )
+
+    companion object {
+        fun of(key: Int, d: FoodDraft) = ScaledFood(
+            key, d, listOf(d.calories, d.protein, d.carbs, d.fat, d.fiber).map { it.toDoubleOrNull() ?: 0.0 },
+        )
+    }
+}
+
+private fun fmtNum(v: Double, decimals: Int = 1): String {
+    val r = if (decimals == 0) Math.round(v).toDouble() else Math.round(v * 10) / 10.0
+    return if (r % 1.0 == 0.0) r.toLong().toString() else r.toString()
+}
+
+/** Two decimals so factors like 0.75 or 1.25 aren't blurred; whole factors drop the ".0". */
+private fun fmtScale(s: Float): String {
+    val r = Math.round(s * 100) / 100.0
+    return if (r % 1.0 == 0.0) r.toLong().toString() else r.toString()
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FoodConfirmSheet(
@@ -48,9 +111,28 @@ fun FoodConfirmSheet(
     onSave: (List<FoodDraft>) -> Unit,
     onDelete: (Long) -> Unit,
     onDismiss: () -> Unit,
+    onRescaleAmount: suspend (String, Double) -> String,
 ) {
-    val items = remember(initial) { mutableStateListOf(*initial.toTypedArray()) }
+    val rows = remember(initial) { mutableStateListOf(*initial.mapIndexed(ScaledFood::of).toTypedArray()) }
+    val items = rows.map { it.draft() }
+    val scope = rememberCoroutineScope()
     val editing = initial.singleOrNull()?.id?.takeIf { it != 0L }
+    fun update(key: Int, f: (ScaledFood) -> ScaledFood) {
+        val i = rows.indexOfFirst { it.key == key }
+        if (i >= 0) rows[i] = f(rows[i])
+    }
+    fun rewriteAmount(key: Int) {
+        val row = rows.firstOrNull { it.key == key } ?: return
+        if (row.scale == row.amountScale || row.amount.isBlank()) return
+        val target = row.scale
+        scope.launch {
+            // On failure the field keeps "amount ×factor", which is still accurate and is what gets saved.
+            val text = runCatching { onRescaleAmount(row.amount, (target / row.amountScale).toDouble()) }.getOrNull()
+                ?: return@launch
+            // Drop the result if the slider moved again meanwhile; that release starts its own rewrite.
+            update(key) { if (it.scale == target && it.amount == row.amount) it.copy(amount = text, amountScale = target) else it }
+        }
+    }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.padding(horizontal = 16.dp).navigationBarsPadding()) {
             val total = { f: (FoodDraft) -> String -> items.sumOf { f(it).toDoubleOrNull() ?: 0.0 }.roundToInt() }
@@ -65,24 +147,58 @@ fun FoodConfirmSheet(
                 modifier = Modifier.padding(vertical = 4.dp),
             )
             LazyColumn(Modifier.weight(1f, fill = false), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                itemsIndexed(items) { i, d ->
+                items(rows, key = { it.key }) { row ->
+                    val d = row.shown
+                    val k = row.key
                     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
                         Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Field("Food", d.name, Modifier.weight(1f)) { items[i] = d.copy(name = it) }
-                                if (items.size > 1) {
-                                    IconButton(onClick = { items.removeAt(i) }) { Icon(Icons.Default.Close, "Remove") }
+                                Field("Food", d.name, Modifier.weight(1f)) { v -> update(k) { it.copy(shown = it.shown.copy(name = v)) } }
+                                if (rows.size > 1) {
+                                    IconButton(onClick = { rows.removeAll { it.key == k } }) { Icon(Icons.Default.Close, "Remove") }
                                 }
                             }
                             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Field("Amount", d.quantity, Modifier.weight(3f)) { items[i] = d.copy(quantity = it) }
-                                NumField("Fiber g", d.fiber, Modifier.weight(1.4f), MacroColors.carbs) { items[i] = d.copy(fiber = it) }
+                                // Typed text is taken as written for the current slider position.
+                                Field("Amount", row.amountShown, Modifier.weight(3f)) { v ->
+                                    update(k) { it.copy(amount = v, amountScale = it.scale) }
+                                }
+                                NumField("Fiber g", d.fiber, Modifier.weight(1.4f), MacroColors.carbs) { v ->
+                                    update(k) { it.typed(4, v) { f, t -> f.copy(fiber = t) } }
+                                }
                             }
                             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                NumField("kcal", d.calories, Modifier.weight(1.2f)) { items[i] = d.copy(calories = it) }
-                                NumField("P", d.protein, Modifier.weight(1f), MacroColors.protein) { items[i] = d.copy(protein = it) }
-                                NumField("C", d.carbs, Modifier.weight(1f), MacroColors.carbs) { items[i] = d.copy(carbs = it) }
-                                NumField("F", d.fat, Modifier.weight(1f), MacroColors.fat) { items[i] = d.copy(fat = it) }
+                                NumField("kcal", d.calories, Modifier.weight(1.2f)) { v ->
+                                    update(k) { it.typed(0, v) { f, t -> f.copy(calories = t) } }
+                                }
+                                NumField("P", d.protein, Modifier.weight(1f), MacroColors.protein) { v ->
+                                    update(k) { it.typed(1, v) { f, t -> f.copy(protein = t) } }
+                                }
+                                NumField("C", d.carbs, Modifier.weight(1f), MacroColors.carbs) { v ->
+                                    update(k) { it.typed(2, v) { f, t -> f.copy(carbs = t) } }
+                                }
+                                NumField("F", d.fat, Modifier.weight(1f), MacroColors.fat) { v ->
+                                    update(k) { it.typed(3, v) { f, t -> f.copy(fat = t) } }
+                                }
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Slider(
+                                    value = row.scale,
+                                    // Snap exactly onto the step so returning to 1x compares equal to 1f.
+                                    onValueChange = { s ->
+                                        val snapped = Math.round(s / SCALE_STEP) * SCALE_STEP
+                                        if (snapped != row.scale) update(k) { it.scaledTo(snapped) }
+                                    },
+                                    onValueChangeFinished = { rewriteAmount(k) },
+                                    valueRange = MIN_SCALE..MAX_SCALE,
+                                    steps = ((MAX_SCALE - MIN_SCALE) / SCALE_STEP).toInt() - 1,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                Text(
+                                    "${fmtScale(row.scale)}×",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    modifier = Modifier.padding(start = 8.dp).width(44.dp),
+                                )
                             }
                         }
                     }
@@ -91,7 +207,7 @@ fun FoodConfirmSheet(
             SheetButtons(
                 saveLabel = if (editing != null) "Save" else "Log ${items.size} item${if (items.size == 1) "" else "s"}",
                 saveEnabled = items.isNotEmpty(),
-                onSave = { onSave(items.toList()) },
+                onSave = { onSave(items) },
                 onDelete = editing?.let { id -> { onDelete(id) } },
                 onDismiss = onDismiss,
             )

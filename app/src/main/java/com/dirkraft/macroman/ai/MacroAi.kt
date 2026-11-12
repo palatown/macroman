@@ -49,6 +49,7 @@ data class WorkoutItem(
 @Serializable private data class FoodResult(val items: List<FoodItem>)
 @Serializable private data class WorkoutResult(val items: List<WorkoutItem>)
 @Serializable private data class HandResult(val measurements: String)
+@Serializable private data class AmountResult(val amount: String)
 
 /** Turns free text and/or a photo into structured macros (or workout sets) with one Claude call. */
 class MacroAi(private val settings: Settings) {
@@ -99,6 +100,15 @@ class MacroAi(private val settings: Settings) {
         return json.decodeFromString<FoodResult>(ask(system, FOOD_SCHEMA, blocks, effort)).items
     }
 
+    /** Rewrites an amount like "1 cup, ~240 g" for [factor] times as much. A tiny job, so it goes to Haiku. */
+    suspend fun rescaleAmount(amount: String, factor: Double): String {
+        val prompt = "Amount: $amount\nFactor: ${"%.2f".format(java.util.Locale.ROOT, factor).trimEnd('0').trimEnd('.')}"
+        val result = json.decodeFromString<AmountResult>(
+            ask(AMOUNT_SYSTEM, AMOUNT_SCHEMA, listOf(text(prompt)), OutputConfig.Effort.LOW, AMOUNT_MODEL)
+        )
+        return result.amount.trim().ifEmpty { throw IllegalStateException("Empty amount") }
+    }
+
     suspend fun parseWorkout(text: String): List<WorkoutItem> =
         json.decodeFromString<WorkoutResult>(
             ask(WORKOUT_SYSTEM, WORKOUT_SCHEMA, listOf(text(text)), OutputConfig.Effort.LOW)
@@ -130,13 +140,14 @@ class MacroAi(private val settings: Settings) {
         schema: Map<String, Any>,
         blocks: List<ContentBlockParam>,
         effort: OutputConfig.Effort,
+        model: String = settings.model.ifBlank { Settings.DEFAULT_MODEL },
     ): String =
         withContext(Dispatchers.IO) {
             val schemaParam = JsonOutputFormat.Schema.builder().apply {
                 schema.forEach { (k, v) -> putAdditionalProperty(k, JsonValue.from(v)) }
             }.build()
             val params = MessageCreateParams.builder()
-                .model(settings.model.ifBlank { Settings.DEFAULT_MODEL })
+                .model(model)
                 .maxTokens(16000L)
                 .system(system)
                 .outputConfig(
@@ -146,9 +157,14 @@ class MacroAi(private val settings: Settings) {
                         .build()
                 )
                 .addUserMessageOfBlockParams(blocks)
-                // Server-side fallback: a safety-classifier refusal is retried on a suitable model instead of failing.
-                .putAdditionalHeader("anthropic-beta", "server-side-fallback-2026-07-01")
-                .putAdditionalBodyProperty("fallbacks", JsonValue.from("default"))
+                .apply {
+                    // Server-side fallback: a safety-classifier refusal is retried on a suitable model instead of failing.
+                    // Haiku has no fallback, so only the main model asks for it.
+                    if (model != AMOUNT_MODEL) {
+                        putAdditionalHeader("anthropic-beta", "server-side-fallback-2026-07-01")
+                        putAdditionalBodyProperty("fallbacks", JsonValue.from("default"))
+                    }
+                }
                 .build()
 
             val message = client().messages().create(params)
@@ -188,6 +204,24 @@ class MacroAi(private val settings: Settings) {
             - Only include dimensions the ruler actually lets you measure; skip anything you would have to guess.
             - If there is no hand or no readable ruler, return an empty string.
         """.trimIndent()
+
+        const val AMOUNT_MODEL = "claude-haiku-5-5"
+
+        val AMOUNT_SYSTEM = """
+            You rewrite the amount of a food log entry after the user scaled the portion.
+            Multiply every quantity in the amount by the factor and keep everything else the same: units, wording and format.
+            - Fix plurals and grammar for the new amount, e.g. "1 cup, ~240 g" at 1.5 is "1.5 cups, ~360 g"; "2 large eggs" at 0.5 is "1 large egg".
+            - Use simple fractions or at most one decimal for counts and volumes; round gram and ml figures to whole numbers.
+            - If the amount has no number, add one that expresses the new amount, e.g. "a bowl" at 2 is "2 bowls".
+            - Return only the rewritten amount.
+        """.trimIndent()
+
+        val AMOUNT_SCHEMA = mapOf(
+            "type" to "object",
+            "properties" to mapOf("amount" to mapOf("type" to "string")),
+            "required" to listOf("amount"),
+            "additionalProperties" to false,
+        )
 
         val HAND_SCHEMA = mapOf(
             "type" to "object",

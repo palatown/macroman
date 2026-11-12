@@ -175,6 +175,7 @@ fun FoodScreen(vm: MainViewModel, snackbar: SnackbarHostState, modifier: Modifie
             onSave = vm::saveFood,
             onDelete = { id -> vm.deleteFood(id); vm.foodDrafts = null },
             onDismiss = { vm.foodDrafts = null },
+            onRescaleAmount = vm::rescaleAmount,
         )
     }
 }

@@ -145,6 +145,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     suspend fun checkKey(): String = ai.check()
 
+    /** Rewrites an entry's amount text after the portion slider moved; throws if Claude can't be reached. */
+    suspend fun rescaleAmount(amount: String, factor: Double): String = ai.rescaleAmount(amount, factor)
+
     fun measureHand(photo: Uri) = run {
         settings.handReference = ai.measureHand(loadJpeg(photo))
     }
