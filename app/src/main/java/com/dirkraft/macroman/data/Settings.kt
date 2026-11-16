@@ -26,6 +26,12 @@ class Settings(context: Context) {
     /** Hand dimensions, one per line, sent with food photos so a hand in frame gives scale. */
     var handReference by pref("hand_reference", "")
 
+    /** How much space kept food pictures may take before the oldest are deleted. */
+    var photoLimitMb: Int
+        get() = photoLimitRaw.toIntOrNull() ?: DEFAULT_PHOTO_LIMIT_MB
+        set(v) { photoLimitRaw = v.toString() }
+    private var photoLimitRaw by pref("photo_limit_mb", DEFAULT_PHOTO_LIMIT_MB.toString())
+
     // Stored under the old rest day key, which is what carries the existing values over.
     private var targetsRaw by pref("targets_rest", DEFAULT_TARGETS.encode())
 
@@ -43,6 +49,7 @@ class Settings(context: Context) {
     }
 
     companion object {
+        const val DEFAULT_PHOTO_LIMIT_MB = 1024
         const val DEFAULT_MODEL = "claude-opus-5-5"
         // Lean-gain starting points for roughly an 80 kg lifter; meant to be tuned in Settings.
         val DEFAULT_TARGETS = Targets(calories = 2400, protein = 180, carbs = 220, fat = 80)

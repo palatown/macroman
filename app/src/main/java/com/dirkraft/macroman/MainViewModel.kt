@@ -45,6 +45,8 @@ data class FoodDraft(
     val carbs: String,
     val fat: String,
     val fiber: String,
+    /** Picture this was estimated from, shared by every item that came out of it. */
+    val photo: String? = null,
 )
 
 data class WorkoutDraft(
@@ -62,7 +64,7 @@ private fun Double.fmt() = if (this % 1.0 == 0.0) toLong().toString() else "%.1f
 private fun String.num() = trim().toDoubleOrNull() ?: 0.0
 
 fun FoodItem.toDraft() = FoodDraft(0, name, quantity, calories.fmt(), protein.fmt(), carbs.fmt(), fat.fmt(), fiber.fmt())
-fun FoodEntry.toDraft() = FoodDraft(id, name, quantity, calories.fmt(), protein.fmt(), carbs.fmt(), fat.fmt(), fiber.fmt())
+fun FoodEntry.toDraft() = FoodDraft(id, name, quantity, calories.fmt(), protein.fmt(), carbs.fmt(), fat.fmt(), fiber.fmt(), photo)
 fun WorkoutItem.toDraft() = WorkoutDraft(
     0, exercise, sets.toString(), reps.toString(), weight.fmt(), unit, durationMin.fmt(), notes,
 )
@@ -102,6 +104,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val macroman = app as MacromanApp
     private val dao = macroman.db.dao()
     private val ai = macroman.ai
+    val photos = macroman.photos
     val settings = macroman.settings
 
     val day = MutableStateFlow(LocalDate.now())
@@ -130,6 +133,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     /** Non-null while the confirm sheet is open. */
     var foodDrafts by mutableStateOf<List<FoodDraft>?>(null)
     var workoutDrafts by mutableStateOf<List<WorkoutDraft>?>(null)
+
+    init {
+        // Catches pictures left behind by a cancelled sheet, and a limit lowered while the app was closed.
+        viewModelScope.launch { photos.enforceLimit() }
+    }
 
     fun shiftDay(days: Long) { day.value = day.value.plusDays(days) }
     fun today() { day.value = LocalDate.now() }
@@ -174,9 +182,16 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun analyzeFood(text: String, photo: Uri? = null) = run {
-        val jpeg = photo?.let { loadJpeg(it) }
-        val items = ai.parseFood(text, jpeg)
-        if (items.isEmpty()) error = "Couldn't find any food in that." else foodDrafts = items.map { it.toDraft() }
+        val shot = photo?.let { loadJpeg(it) }
+        val items = ai.parseFood(text, shot?.jpeg)
+        if (items.isEmpty()) {
+            error = "Couldn't find any food in that."
+        } else {
+            // Kept only once it produced something to log. The phone keeps the camera's original file;
+            // only the downscaled, EXIF-free copy was sent to Claude.
+            val name = shot?.let { photos.save(it.original, it.takenAt) }
+            foodDrafts = items.map { it.toDraft().copy(photo = name) }
+        }
     }
 
     fun analyzeWorkout(text: String) = run {
@@ -190,7 +205,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     suspend fun rescaleAmount(amount: String, factor: Double): String = ai.rescaleAmount(amount, factor)
 
     fun measureHand(photo: Uri) = run {
-        settings.handReference = ai.measureHand(loadJpeg(photo))
+        settings.handReference = ai.measureHand(loadJpeg(photo).jpeg)
     }
 
     fun editFood(entry: FoodEntry) { foodDrafts = listOf(entry.toDraft()) }
@@ -202,7 +217,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
      */
     fun duplicateFood(draft: FoodDraft) {
         today()
-        foodDrafts = listOf(draft.copy(id = 0))
+        // The picture belongs to the original meal, so the copy doesn't carry it.
+        foodDrafts = listOf(draft.copy(id = 0, photo = null))
     }
 
     fun duplicateWorkout(draft: WorkoutDraft) {
@@ -219,7 +235,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 FoodEntry(
                     id = d.id, day = dayKey, time = time, name = d.name.trim(), quantity = d.quantity.trim(),
                     calories = d.calories.num(), protein = d.protein.num(), carbs = d.carbs.num(), fat = d.fat.num(),
-                    fiber = d.fiber.num(),
+                    fiber = d.fiber.num(), photo = d.photo,
                 )
             }.partition { it.id != 0L }
             // Edits keep their original day and time.
@@ -227,7 +243,21 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 food.value.find { it.id == e.id }?.let { dao.updateFood(e.copy(day = it.day, time = it.time)) }
             }
             if (fresh.isNotEmpty()) dao.insertFood(fresh)
+            // Items removed from the sheet may have left their picture unused.
+            drafts.mapNotNull { it.photo }.distinct().forEach { photos.release(it) }
         }
+    }
+
+    /** Closing the sheet without saving drops a new picture that no entry ended up using. */
+    fun dismissFood() {
+        val dropped = foodDrafts.orEmpty().mapNotNull { it.photo }.distinct()
+        foodDrafts = null
+        viewModelScope.launch { dropped.forEach { photos.release(it) } }
+    }
+
+    fun setPhotoLimit(mb: Int) {
+        settings.photoLimitMb = mb
+        viewModelScope.launch { photos.enforceLimit() }
     }
 
     fun saveWorkouts(drafts: List<WorkoutDraft>) {
@@ -251,7 +281,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     /** One-tap re-log of a previous entry onto the selected day. Returns the new row so it can be undone. */
     suspend fun relogFood(entry: FoodEntry): FoodEntry {
-        val copy = entry.copy(id = 0, day = day.value.toString(), time = stamp())
+        val copy = entry.copy(id = 0, day = day.value.toString(), time = stamp(), photo = null)
         return copy.copy(id = dao.insertFood(listOf(copy)).first())
     }
 
@@ -261,7 +291,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun deleteFood(id: Long) = viewModelScope.launch {
-        food.value.find { it.id == id }?.let { dao.deleteFood(it) }
+        food.value.find { it.id == id }?.let {
+            dao.deleteFood(it)
+            photos.release(it.photo)
+        }
     }
 
     fun deleteWorkout(id: Long) = viewModelScope.launch {
@@ -276,16 +309,22 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
      * Re-encoding from bare pixels also drops all EXIF metadata (GPS, timestamps, device), so only the
      * image itself leaves the phone. The EXIF rotation is applied to the pixels first so it isn't lost.
      */
-    private suspend fun loadJpeg(uri: Uri): ByteArray = withContext(Dispatchers.IO) {
+    /** [jpeg] is what goes to Claude; [original] is the untouched camera file, which only stays on the phone. */
+    private class Shot(val jpeg: ByteArray, val original: ByteArray, val takenAt: Long)
+
+    private suspend fun loadJpeg(uri: Uri): Shot = withContext(Dispatchers.IO) {
         val resolver = getApplication<Application>().contentResolver
-        val rotation = resolver.openInputStream(uri)?.use {
-            when (ExifInterface(it).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
-                ExifInterface.ORIENTATION_ROTATE_90 -> 90f
-                ExifInterface.ORIENTATION_ROTATE_180 -> 180f
-                ExifInterface.ORIENTATION_ROTATE_270 -> 270f
-                else -> 0f
-            }
-        } ?: 0f
+        val original = resolver.openInputStream(uri)?.use { it.readBytes() }
+            ?: throw IllegalStateException("Couldn't read the photo.")
+        val exif = ExifInterface(original.inputStream())
+        val rotation = when (exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> 90f
+            ExifInterface.ORIENTATION_ROTATE_180 -> 180f
+            ExifInterface.ORIENTATION_ROTATE_270 -> 270f
+            else -> 0f
+        }
+        // When the picture was taken, read before the metadata is stripped; it orders eviction.
+        val takenAt = exif.dateTimeOriginal.takeIf { it > 0 } ?: System.currentTimeMillis()
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         resolver.openInputStream(uri).use { BitmapFactory.decodeStream(it, null, bounds) }
         val longEdge = maxOf(bounds.outWidth, bounds.outHeight)
@@ -302,10 +341,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             }
             Bitmap.createBitmap(decoded, 0, 0, decoded.width, decoded.height, matrix, true)
         } else decoded
-        ByteArrayOutputStream().use { out ->
+        val jpeg = ByteArrayOutputStream().use { out ->
             bitmap.compress(Bitmap.CompressFormat.JPEG, 85, out)
             out.toByteArray()
         }
+        Shot(jpeg, original, takenAt)
     }
 
     private companion object {

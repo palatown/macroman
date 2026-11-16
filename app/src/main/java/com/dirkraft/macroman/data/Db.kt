@@ -31,6 +31,8 @@ data class FoodEntry(
     val fat: Double,
     /** Grams of fiber, counted within [carbs] rather than on top of it. */
     @ColumnInfo(defaultValue = "0") val fiber: Double = 0.0,
+    /** File name in [PhotoStore] of the picture this was logged from; null once evicted or if there was none. */
+    val photo: String? = null,
 )
 
 @Entity(tableName = "workout")
@@ -62,6 +64,15 @@ interface LogDao {
     /** Food from a range of days (ISO dates compare correctly as text), the raw material for suggestions. */
     @Query("SELECT * FROM food WHERE day BETWEEN :fromDay AND :toDay ORDER BY time")
     fun foodBetween(fromDay: String, toDay: String): Flow<List<FoodEntry>>
+
+    @Query("SELECT COUNT(*) FROM food WHERE photo = :name")
+    suspend fun photoRefs(name: String): Int
+
+    @Query("SELECT DISTINCT photo FROM food WHERE photo IS NOT NULL")
+    suspend fun photos(): List<String>
+
+    @Query("UPDATE food SET photo = NULL WHERE photo = :name")
+    suspend fun forgetPhoto(name: String)
 
     @Insert suspend fun insertFood(entries: List<FoodEntry>): List<Long>
     @Update suspend fun updateFood(entry: FoodEntry)
@@ -97,7 +108,7 @@ interface LogDao {
     }
 }
 
-@Database(entities = [FoodEntry::class, WorkoutEntry::class, WaterDay::class], version = 5, exportSchema = false)
+@Database(entities = [FoodEntry::class, WorkoutEntry::class, WaterDay::class], version = 6, exportSchema = false)
 abstract class AppDb : RoomDatabase() {
     abstract fun dao(): LogDao
 
@@ -131,9 +142,15 @@ abstract class AppDb : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE food ADD COLUMN photo TEXT")
+            }
+        }
+
         fun open(context: Context): AppDb =
             Room.databaseBuilder(context, AppDb::class.java, "macroman.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                 .build()
     }
 }

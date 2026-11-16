@@ -75,6 +75,7 @@ fun FoodScreen(vm: MainViewModel, snackbar: SnackbarHostState, modifier: Modifie
     val frequent by vm.suggestedFood.collectAsStateWithLifecycle()
     val waterMl by vm.waterMl.collectAsStateWithLifecycle()
     var text by rememberInputText()
+    var viewing by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -147,7 +148,7 @@ fun FoodScreen(vm: MainViewModel, snackbar: SnackbarHostState, modifier: Modifie
                 }
             }
             items(food, key = { it.id }) { entry ->
-                FoodRow(entry) { vm.editFood(entry) }
+                FoodRow(entry, entry.photo?.let(vm.photos::file), onPhoto = { viewing = entry.photo }) { vm.editFood(entry) }
                 HorizontalDivider()
             }
         }
@@ -174,11 +175,12 @@ fun FoodScreen(vm: MainViewModel, snackbar: SnackbarHostState, modifier: Modifie
             initial = drafts,
             onSave = vm::saveFood,
             onDelete = { id -> vm.deleteFood(id); vm.foodDrafts = null },
-            onDismiss = { vm.foodDrafts = null },
+            onDismiss = vm::dismissFood,
             onRescaleAmount = vm::rescaleAmount,
             onDuplicate = vm::duplicateFood,
         )
     }
+    viewing?.let { name -> PhotoViewer(vm.photos.file(name)) { viewing = null } }
 }
 
 @Composable
@@ -310,11 +312,13 @@ private fun MacroBar(label: String, value: Double, target: Int, unit: String, co
 }
 
 @Composable
-private fun FoodRow(entry: FoodEntry, onClick: () -> Unit) {
+private fun FoodRow(entry: FoodEntry, photo: File?, onPhoto: () -> Unit, onClick: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        if (photo != null) PhotoThumb(photo, 44.dp, onPhoto)
         Column(Modifier.weight(1f)) {
             Text(entry.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(

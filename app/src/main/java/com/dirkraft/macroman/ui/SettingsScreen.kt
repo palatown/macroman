@@ -1,6 +1,13 @@
 package com.dirkraft.macroman.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.material3.FilterChip
+import androidx.compose.runtime.produceState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -154,6 +161,42 @@ fun SettingsScreen(vm: MainViewModel, modifier: Modifier) {
         )
 
         TargetsEditor("Daily targets", settings.targets) { settings.targets = it }
+
+        PhotoStorage(vm)
+    }
+}
+
+private val PHOTO_LIMITS_MB = listOf(256, 512, 1024, 2048, 4096)
+
+private fun fmtMb(mb: Double) =
+    if (mb >= 1024) "%.1f GB".format(mb / 1024).replace(".0 ", " ") else "${mb.roundToInt()} MB"
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun PhotoStorage(vm: MainViewModel) {
+    val limit = vm.settings.photoLimitMb
+    // Re-measured when the limit changes; eviction runs in the background, so measure again shortly after.
+    val usedMb by produceState(0.0, limit) {
+        repeat(2) {
+            value = withContext(Dispatchers.IO) { vm.photos.usedBytes() } / (1024.0 * 1024.0)
+            delay(1500)
+        }
+    }
+    Text("Food photos", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
+    Text(
+        "Kept on this phone only, and left out of phone backups. Past the limit the oldest pictures are " +
+            "deleted; their entries stay. Using ${fmtMb(usedMb)} of ${fmtMb(limit.toDouble())}.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        PHOTO_LIMITS_MB.forEach { mb ->
+            FilterChip(
+                selected = mb == limit,
+                onClick = { vm.setPhotoLimit(mb) },
+                label = { Text(fmtMb(mb.toDouble())) },
+            )
+        }
     }
 }
 
