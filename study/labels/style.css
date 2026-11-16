@@ -1,0 +1,15 @@
+body{margin:0;background:#fff;font-family:Helvetica,Arial,sans-serif}
+.nf{border:2px solid #000;padding:6px 8px;width:300px;color:#000;background:#fff}
+.nf h1{font-size:34px;font-weight:900;margin:0;letter-spacing:-1px;line-height:1}
+.nf .thick{border-top:10px solid #000;margin:4px 0}
+.nf .med{border-top:5px solid #000;margin:4px 0}
+.nf .thin{border-top:1px solid #000;margin:2px 0}
+.nf .row{display:flex;justify-content:space-between;font-size:15px;padding:1px 0}
+.nf .cal{display:flex;justify-content:space-between;font-size:30px;font-weight:900}
+.nf .ind{padding-left:16px}
+.nf b{font-weight:900}
+table.eu{border-collapse:collapse;font-size:15px;width:380px;background:#fff}
+table.eu td,table.eu th{border:1px solid #333;padding:4px 8px;text-align:left}
+table.eu th{background:#eee}
+.photo{padding:60px;background:radial-gradient(circle at 30% 30%,#d9c9a8,#8a7a5a)}
+.photo .nf{transform:perspective(700px) rotateY(18deg) rotateX(8deg) rotate(-6deg);filter:blur(0.9px) contrast(0.8) brightness(0.92);box-shadow:8px 10px 20px rgba(0,0,0,.4)}

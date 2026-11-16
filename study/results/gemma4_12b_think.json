@@ -1,0 +1,709 @@
+{
+  "model": "gemma4:12b+think",
+  "system": "You are the logging engine of a macro tracker used by someone building lean muscle.\nConvert the user's description and/or photo into a list of food items with estimated macros.\n- One item per distinct food. Combine trivial components only when they are normally eaten together (e.g. \"ham sandwich\").\n- Use the stated quantity; if none is given, assume a typical single serving and state it in \"quantity\" (e.g. \"1 cup, ~240 g\").\n- If a nutrition label is visible, use its exact values scaled to the amount eaten.\n- For branded or restaurant items, use the known published nutrition when you know it.\n- calories in kcal, macros in grams, rounded to whole numbers. Keep calories consistent with 4/4/9 kcal per g of protein/carbs/fat.\n- carbs_g is total carbohydrate including fiber, and fiber_g is the dietary fiber within it, so fiber_g never exceeds carbs_g. If a label lists carbohydrates excluding fiber, as EU labels do, add the fiber to carbs_g.\n- Keep \"name\" short (2-5 words), title case.\n- If the input does not describe food, return an empty list.\n- For photos, estimate portions from the size of plates, bowls, cutlery, packaging and other objects of known size.",
+  "rows": [
+    {
+      "id": "eggs_butter",
+      "kind": "text",
+      "ref": {
+        "kcal": 177,
+        "p": 12.6,
+        "c": 0.7,
+        "f": 13.3,
+        "fiber": 0
+      },
+      "ms": 10665,
+      "tokens": 1767,
+      "items": [
+        {
+          "name": "Scrambled Eggs",
+          "quantity": "2 large eggs, 1 tsp butter",
+          "calories": 178,
+          "protein_g": 12,
+          "carbs_g": 1,
+          "fat_g": 14,
+          "fiber_g": 0
+        }
+      ],
+      "got": {
+        "kcal": 178,
+        "p": 12,
+        "c": 1,
+        "f": 14,
+        "fiber": 0
+      },
+      "pass": true,
+      "kcalErrPct": 0.5649717514124294,
+      "macroErr": 0.6999999999999993,
+      "thinking": "*   Input: \"2 large eggs scrambled with a tsp of butter\"\n    *   Goal: Convert to a list of food items with estimated macros.\n    *   Constraints:\n        *   One item per distinct food (combine trivial components).\n        *   Use stated quantity; if none, assume typical serving.\n        *   Calories: kcal.\n        *   Macros: grams (rounded to whole numbers).\n        *   Consistency: 4 kcal/g protein, 4 kcal/g carbs, 9 kcal/g fat.\n        *   Fiber: fiber_g <= carbs_g.\n        *   Name: Short (2-5 words), Title Case.\n        *   Return empty list if no food.\n\n    *   Item 1: Scrambled Eggs (2 large eggs)\n    *   Item 2: Butter (1 tsp)\n\n    *   *2 Large Eggs:*\n        *   Standard large egg: ~70 kcal, 6g protein, 0g carbs, 5g fat.\n        *   Total for 2: 140 kcal, 12g protein, 0g carbs, 10g fat.\n    *   *1 tsp Butter:*\n        *   Standard tsp butter: ~34 kcal, 0g protein, 0g carbs, 4g fat.\n\n    *   *Combined Item (Scrambled Eggs with Butter):*\n        *   Calories: 140 + 34 = 174 kcal.\n        *   Protein: 12 + 0 = 12g.\n        *   Carbs: 0 + 0 = 0g.\n        *   Fat: 10 + 4 = 14g.\n\n    *   *Wait, the prompt says \"One item per distinct food. Combine trivial components only when they are normally eaten together (e.g. 'ham sandwich')\".*\n    *   Scrambled eggs with butter is a single dish. I can list it as one item or two. Usually, \"Scrambled Eggs\" is the dish.\n\n    *   Let's check the math:\n        *   Protein: 12g * 4 = 48\n        *   Carbs: 0g * 4 = 0\n        *   Fat: 14g * 9 = 126\n        *   Total: 48 + 126 = 174 kcal. (Matches).\n\n    *   Name: Scrambled Eggs\n    *   Quantity: 2 large eggs, 1 tsp butter\n    *   Calories: 174 kcal\n    *   Protein: 12g\n    *   Carbs: 0g\n    *   Fat: 14g\n    *   Fiber: 0g\n\n    *   Name: Scrambled Eggs\n    *   Quantity: 2 large eggs, 1 tsp butter\n    *   Calories: 174\n    *   Protein: 12\n    *   Carbs: 0\n    *   Fat: 14\n    *   Fiber: 0\n\n    *Self-Correction:* The prompt asks for a list of food items. Since \"scrambled eggs with butter\" is a single preparation, I'll list it as one entry.\n\n    *Refining the quantity string:* \"2 large eggs, 1 tsp butter\"\n\n    *Double check calories:*\n    Egg (Large): 72 kcal, 6g P, 0.5g C, 5g F.\n    2 Eggs: 144 kcal, 12g P, 1g C, 10g F.\n    1 tsp Butter: 34 kcal, 0g P, 0g C, 4g F.\n    Total: 178 kcal, 12g P, 1g C, 14g F.\n    Check: (12*4) + (1*4) + (14*9) = 48 + 4 + 126 = 178.\n\n    Let's use the 178 kcal version.\n\n    *Final check on constraints:*\n    - One item per distinct food: Yes.\n    - Stated quantity: Yes.\n    - Calories kcal, macros grams, rounded: Yes.\n    - Consistency 4/4/9: Yes.\n    - Fiber <= Carbs: Yes.\n    - Name short/title case: Yes.\n\n    Wait, I should probably list them as separate items if they are distinct ingredients, but \"scrambled eggs\" is a prepared dish. The prompt says \"Combine trivial components only when they are normally eaten together\". Butter in scrambled eggs is a trivial component.\n\n    Let's provide the list.\n\n    Item: Scrambled Eggs\n    Quantity: 2 large eggs, 1 tsp butter\n    Calories: 178\n    Protein: 12\n    Carbs: 1\n    Fat: 14\n    Fiber: 0\n\n    Actually, let's look at standard egg data.\n    1 Large Egg: 72 kcal, 6g P, 0.5g C, 5g F.\n    2 Eggs: 144 kcal, 12g P, 1g C, 10g F.\n    1 tsp Butter: 34 kcal, 0g P, 0g C, 4g F.\n    Total: 178 kcal, 12g P, 1g C, 14g F.\n\n    Wait, if I round 0.5g carbs to 1g, then 1g * 4 = 4.\n    12g P * 4 = 48.\n    14g F * 9 = 126.\n    48 + 4 + 126 = 178. Correct.\n\n    One more check: \"One item per distinct food.\"\n    Is butter a distinct food? In a \"scrambled eggs\" dish, it's a preparation component.\n    I will list it as one item.\n\n    Wait, looking at the prompt \"Convert the user's description... into a list of food items\".\n    If I list \"Scrambled Eggs\", it's one item.\n\n    Let's re-read: \"Combine trivial components only when they are normally eaten together (e.g. 'ham sandwich')\".\n    A ham sandwich is ham + bread + condiments.\n    Scrambled eggs with butter is eggs + butter.\n    I'll keep it as one item.\n\n    Name: Scrambled Eggs\n    Quantity: 2 large eggs, 1 tsp butter\n    Calories: 178\n    Protein: 12\n    Carbs: 1\n    Fat: 14\n    Fiber: 0\n\n    Wait, I'll check if I should separate them. If I separate them:\n    1. Scrambled Eggs (2 large)\n    2. Butter (1 tsp)\n    But the prompt says \"Combine trivial components only when they are normally eaten together\". Butter is definitely a trivial component of scrambled eggs.\n\n    Final check on rounding:\n    Protein: 12\n    Carbs: 1\n    Fat: 14\n    Calories: 178\n\n    Wait, 12*4 + 1*4 + 14*9 = 48 + 4 + 126 = 178. Perfect."
+    },
+    {
+      "id": "chicken_200g",
+      "kind": "text",
+      "ref": {
+        "kcal": 330,
+        "p": 62,
+        "c": 0,
+        "f": 7.2,
+        "fiber": 0
+      },
+      "ms": 3999,
+      "tokens": 671,
+      "items": [
+        {
+          "name": "Cooked Chicken Breast",
+          "quantity": "200g",
+          "calories": 311,
+          "protein_g": 62,
+          "carbs_g": 0,
+          "fat_g": 7,
+          "fiber_g": 0
+        }
+      ],
+      "got": {
+        "kcal": 311,
+        "p": 62,
+        "c": 0,
+        "f": 7,
+        "fiber": 0
+      },
+      "pass": true,
+      "kcalErrPct": 5.757575757575758,
+      "macroErr": 0.20000000000000018,
+      "thinking": "*   Input: \"200g cooked chicken breast\"\n    *   Goal: Convert to a list of food items with estimated macros.\n    *   Constraints:\n        *   One item per distinct food.\n        *   Use stated quantity (200g).\n        *   Calories in kcal, macros in grams (rounded to whole numbers).\n        *   Consistency: 4 kcal/g protein, 4 kcal/g carbs, 9 kcal/g fat.\n        *   `carbs_g` includes fiber.\n        *   Short name (2-5 words, Title Case).\n        *   Return empty list if no food.\n\n    *   Food: Cooked Chicken Breast.\n    *   Quantity: 200g.\n    *   Nutritional values for cooked chicken breast (standard):\n        *   Protein: ~31g per 100g.\n        *   Fat: ~3.6g per 100g.\n        *   Carbs: 0g.\n    *   Calculation for 200g:\n        *   Protein: 31 * 2 = 62g.\n        *   Fat: 3.6 * 2 = 7.2g -> 7g.\n        *   Carbs: 0g.\n        *   Calories: (62 * 4) + (7 * 9) = 248 + 63 = 311 kcal.\n\n    *   Name: Cooked Chicken Breast\n    *   Quantity: 200g\n    *   Calories: 311\n    *   Protein: 62g\n    *   Fat: 7g\n    *   Carbs: 0g\n    *   Fiber: 0g\n\n    *   One item per distinct food? Yes.\n    *   Stated quantity used? Yes (200g).\n    *   Calories consistent? 62*4 + 7*9 = 248 + 63 = 311. Yes.\n    *   Carbs/Fiber logic? 0/0. Yes.\n    *   Short name? Yes.\n\n    ```json\n    [\n      {\n        \"name\": \"Cooked Chicken Breast\",\n        \"quantity\": \"200g\",\n        \"calories\": 311,\n        \"protein_g\": 62,\n        \"fat_g\": 7,\n        \"carbs_g\": 0,\n        \"fiber_g\": 0\n      }\n    ]\n    ```"
+    },
+    {
+      "id": "rice_cup",
+      "kind": "text",
+      "ref": {
+        "kcal": 205,
+        "p": 4.3,
+        "c": 44.5,
+        "f": 0.4,
+        "fiber": 0.6
+      },
+      "ms": 4683,
+      "tokens": 770,
+      "items": [
+        {
+          "name": "Cooked White Rice",
+          "quantity": "1 cup, ~185 g",
+          "calories": 205,
+          "protein_g": 4,
+          "carbs_g": 45,
+          "fat_g": 1,
+          "fiber_g": 1
+        }
+      ],
+      "got": {
+        "kcal": 205,
+        "p": 4,
+        "c": 45,
+        "f": 1,
+        "fiber": 1
+      },
+      "pass": true,
+      "kcalErrPct": 0,
+      "macroErr": 0.6,
+      "thinking": "*   Input: \"1 cup cooked white rice\"\n    *   Task: Convert to a list of food items with estimated macros.\n    *   Constraints:\n        *   One item per distinct food.\n        *   Use stated quantity (1 cup).\n        *   Calories in kcal, macros in grams (rounded to whole numbers).\n        *   Consistency: 4 kcal/g (protein), 4 kcal/g (carbs), 9 kcal/g (fat).\n        *   `carbs_g` includes fiber.\n        *   `fiber_g` <= `carbs_g`.\n        *   Short name (2-5 words, Title Case).\n        *   Return empty list if no food.\n\n    *   Food: Cooked White Rice.\n    *   Quantity: 1 cup (~158-185g depending on source, but \"1 cup\" is the standard unit).\n    *   Standard Nutrition for 1 cup cooked white rice:\n        *   Calories: ~205-215 kcal.\n        *   Protein: ~4-5g.\n        *   Carbs: ~45-48g.\n        *   Fat: ~0.4-0.6g (round to 1g or 0g).\n        *   Fiber: ~0.6g (round to 1g).\n\n    *   *Refining values for consistency:*\n        *   Protein: 4g * 4 = 16 kcal\n        *   Carbs: 45g * 4 = 180 kcal\n        *   Fat: 1g * 9 = 9 kcal\n        *   Total: 16 + 180 + 9 = 205 kcal.\n\n    *   Name: Cooked White Rice\n    *   Quantity: 1 cup, ~185 g\n    *   Calories: 205 kcal\n    *   Protein: 4 g\n    *   Carbs: 45 g\n    *   Fat: 1 g\n    *   Fiber: 1 g\n\n    *   One item per distinct food? Yes.\n    *   Stated quantity? Yes (1 cup).\n    *   Calories/Macros rounded? Yes.\n    *   Consistency (4/4/9)? 4*4 + 45*4 + 1*9 = 16 + 180 + 9 = 205. Yes.\n    *   Fiber <= Carbs? 1 <= 45. Yes.\n    *   Short name? Yes.\n\n    ```json\n    [\n      {\n        \"name\": \"Cooked White Rice\",\n        \"quantity\": \"1 cup, ~185 g\",\n        \"calories\": 205,\n        \"protein_g\": 4,\n        \"carbs_g\": 45,\n        \"fat_g\": 1,\n        \"fiber_g\": 1\n      }\n    ]\n    ```"
+    },
+    {
+      "id": "banana",
+      "kind": "text",
+      "ref": {
+        "kcal": 105,
+        "p": 1.3,
+        "c": 27,
+        "f": 0.4,
+        "fiber": 3.1
+      },
+      "ms": 14472,
+      "tokens": 2388,
+      "items": [
+        {
+          "name": "Medium Banana",
+          "quantity": "1 unit, ~118 g",
+          "calories": 112,
+          "protein_g": 1,
+          "carbs_g": 27,
+          "fat_g": 0,
+          "fiber_g": 3
+        }
+      ],
+      "got": {
+        "kcal": 112,
+        "p": 1,
+        "c": 27,
+        "f": 0,
+        "fiber": 3
+      },
+      "pass": true,
+      "kcalErrPct": 6.666666666666667,
+      "macroErr": 0.4,
+      "thinking": "*   Input: \"a medium banana\"\n    *   Context: Logging engine for a macro tracker (lean muscle building).\n    *   Task: Convert description into a list of food items with estimated macros.\n    *   Constraints:\n        *   One item per distinct food.\n        *   Use stated quantity (medium banana).\n        *   Calories in kcal, macros in grams (rounded to whole numbers).\n        *   Consistency: 4 kcal/g (protein), 4 kcal/g (carbs), 9 kcal/g (fat).\n        *   `carbs_g` includes fiber.\n        *   `fiber_g` <= `carbs_g`.\n        *   Short name (2-5 words, Title Case).\n        *   Return empty list if no food.\n\n    *   Item: Banana\n    *   Size: Medium (approx. 118g - 126g edible portion).\n    *   Standard nutrition for a medium banana (~118g):\n        *   Calories: ~105 kcal\n        *   Protein: ~1.3g -> 1g\n        *   Carbs: ~27g\n        *   Fiber: ~3g\n        *   Fat: ~0.4g -> 0g\n\n    *   *Check consistency:*\n        *   Protein: 1g * 4 = 4 kcal\n        *   Carbs: 27g * 4 = 108 kcal\n        *   Fat: 0g * 9 = 0 kcal\n        *   Total: 112 kcal (Close enough to 105, rounding to nearest whole numbers).\n\n    *   *Refining values for a \"Medium Banana\":*\n        *   Calories: 105 kcal\n        *   Protein: 1g\n        *   Carbs: 27g\n        *   Fiber: 3g\n        *   Fat: 0g\n\n    *   Name: Medium Banana\n    *   Quantity: 1 unit, ~118 g\n    *   Calories: 105\n    *   Protein: 1\n    *   Carbs: 27\n    *   Fiber: 3\n    *   Fat: 0\n\n    *   One item per distinct food? Yes.\n    *   Stated quantity? Yes (Medium).\n    *   Calories/Macros rounded? Yes.\n    *   Consistency? 1*4 + 27*4 + 0*9 = 112. (105 is the standard, but let's adjust to match the 4/4/9 rule exactly if possible).\n    *   If 105 kcal is the target:\n        *   Protein: 1g (4)\n        *   Carbs: 25g (100)\n        *   Fat: 0g (0)\n        *   Total: 104.\n    *   Let's go with standard medium banana values:\n        *   Calories: 105\n        *   Protein: 1\n        *   Carbs: 27\n        *   Fiber: 3\n        *   Fat: 0\n        *   (1*4 + 27*4 + 0*9 = 112. Since the prompt says \"Keep calories consistent with 4/4/9\", I should ensure the sum of macros equals the calories).\n    *   Recalculating for consistency:\n        *   Calories: 112\n        *   Protein: 1\n        *   Carbs: 27\n        *   Fiber: 3\n        *   Fat: 0\n\n    *   Wait, usually, \"Medium Banana\" is ~105 kcal.\n    *   Let's try:\n        *   Calories: 105\n        *   Protein: 1\n        *   Carbs: 25\n        *   Fiber: 3\n        *   Fat: 0\n        *   (1*4 + 25*4 + 0*9 = 104). Close enough.\n\n    *   Let's stick to standard values and adjust calories to match the 4/4/9 rule.\n    *   Banana (Medium): 105 kcal, 1g P, 27g C, 3g F, 0g Fat.\n    *   Sum: 1*4 + 27*4 + 0*9 = 112.\n    *   I will use 112 kcal to maintain consistency with the 4/4/9 rule.\n\n    *   Name: Medium Banana\n    *   Quantity: 1 unit, ~118 g\n    *   Calories: 112\n    *   Protein: 1\n    *   Carbs: 27\n    *   Fiber: 3\n    *   Fat: 0\n\n    *   Wait, the prompt says \"Keep calories consistent with 4/4/9 kcal per g of protein/carbs/fat.\"\n    *   If I use 105 kcal, the macros must sum to 105.\n    *   1g Protein (4) + 25g Carbs (100) + 0g Fat (0) = 104.\n    *   Let's use:\n        *   Calories: 104\n        *   Protein: 1\n        *   Carbs: 25\n        *   Fiber: 3\n        *   Fat: 0\n\n    *   Actually, most trackers just want the closest estimate.\n    *   Let's go with:\n        *   Calories: 105\n        *   Protein: 1\n        *   Carbs: 26\n        *   Fiber: 3\n        *   Fat: 0\n        *   (1*4 + 26*4 + 0*9 = 108).\n\n    *   Let's try to get exactly 105.\n    *   Protein: 1 (4)\n    *   Carbs: 25 (100)\n    *   Fat: 0 (0)\n    *   Total: 104.\n    *   I'll use 104 kcal.\n\n    *   Wait, let's check a standard medium banana again.\n    *   USDA: 105 kcal, 1.3g P, 27g C, 3.1g Fiber, 0.4g Fat.\n    *   Rounding: 1g P, 27g C, 3g Fiber, 0g Fat.\n    *   Sum: 1*4 + 27*4 + 0*9 = 112.\n    *   I will provide 112 kcal to ensure the 4/4/9 consistency.\n\n    *   Name: Medium Banana\n    *   Quantity: 1 unit, ~118 g\n    *   Calories: 112\n    *   Protein: 1\n    *   Carbs: 27\n    *   Fiber: 3\n    *   Fat: 0\n\n    *   Wait, the prompt says \"Keep calories consistent with 4/4/9\". This means Calories = (Protein * 4) + (Carbs * 4) + (Fat * 9).\n    *   If I use 112 kcal, it is perfectly consistent.\n\n    *   Final check on \"Medium Banana\" weight: ~118g is standard.\n\n    *   JSON format? The prompt doesn't specify JSON, but usually, these engines output a list of objects or a structured list. I will provide a clean list.\n\n    *   Wait, the prompt says \"Convert... into a list of food items\".\n\n    *   Item 1:\n        *   Name: Medium Banana\n        *   Quantity: 1 unit, ~118 g\n        *   Calories: 112\n        *   Protein: 1\n        *   Carbs: 27\n        *   Fiber: 3\n        *   Fat: 0\n\n    *   Let's double check the \"Medium Banana\" carbs. 27g is standard.\n    *   1*4 + 27*4 = 4 + 108 = 112. Correct.\n\n    *   One more check: \"carbs_g is total carbohydrate including fiber\". Yes, 27 includes 3.\n\n    *   Final Output Construction:\n        - Name: Medium Banana\n        - Quantity: 1 unit, ~118 g\n        - Calories: 112\n        - Protein: 1 g\n        - Carbs: 27 g\n        - Fiber: 3 g\n        - Fat: 0 g\n\n    *   Wait, the prompt says \"calories in kcal, macros in grams\".\n    *   I'll format it clearly.\n\n    *   Actually, looking at the prompt \"Convert... into a list of food items\", I should probably provide a structured list.\n\n    *   Let's re-read: \"One item per distinct food... Use the stated quantity... calories in kcal, macros in grams, rounded to whole numbers.\"\n\n    *   Result:\n        - Medium Banana (1 unit, ~118 g): 112 kcal, 1 g protein, 27 g carbs, 3 g fiber, 0 g fat.\n\n    *   Wait, I'll use a standard list format.\n\n    *   Name: Medium Banana\n    *   Quantity: 1 unit, ~118 g\n    *   Calories: 112\n    *   Protein: 1\n    *   Carbs: 27\n    *   Fiber: 3\n    *   Fat: 0\n\n    *   Wait, I should check if \"Medium Banana\" is the best name. Yes.\n\n    *   Let's check the math one last time.\n    *   1 * 4 = 4\n    *   27 * 4 = 108\n    *   0 * 9 = 0\n    *   4 + 108 = 112. Perfect."
+    },
+    {
+      "id": "whey",
+      "kind": "text",
+      "ref": {
+        "kcal": 120,
+        "p": 24,
+        "c": 3,
+        "f": 1.5,
+        "fiber": 0
+      },
+      "ms": 10342,
+      "tokens": 1729,
+      "items": [
+        {
+          "name": "Whey Protein",
+          "quantity": "1 scoop, ~30 g",
+          "calories": 122,
+          "protein_g": 24,
+          "carbs_g": 2,
+          "fat_g": 2,
+          "fiber_g": 0
+        }
+      ],
+      "got": {
+        "kcal": 122,
+        "p": 24,
+        "c": 2,
+        "f": 2,
+        "fiber": 0
+      },
+      "pass": true,
+      "kcalErrPct": 1.6666666666666667,
+      "macroErr": 1,
+      "thinking": "*   Input: \"scoop of whey protein in water\"\n    *   Context: User building lean muscle (macro tracker).\n    *   Task: Convert to a list of food items with estimated macros.\n\n    *   Item: Whey protein powder.\n    *   Quantity: \"scoop\" (standard scoop is usually ~30-35g).\n    *   Liquid: Water (negligible calories/macros).\n\n    *   Standard whey protein scoop (approx. 30g):\n        *   Calories: ~120 kcal\n        *   Protein: ~24g\n        *   Carbs: ~2g\n        *   Fat: ~1.5g (round to 2g or 1g depending on brand, let's go with a standard average).\n    *   *Refining for consistency:*\n        *   Protein: 24g * 4 = 96 kcal\n        *   Carbs: 2g * 4 = 8 kcal\n        *   Fat: 1.5g * 9 = 13.5 kcal\n        *   Total: 96 + 8 + 13.5 = 117.5 (Round to 120 kcal).\n\n    *   Name: Whey Protein\n    *   Quantity: 1 scoop, ~30 g\n    *   Calories: 120 kcal\n    *   Protein: 24 g\n    *   Carbs: 2 g\n    *   Fiber: 0 g\n    *   Fat: 2 g\n\n    *   One item per distinct food? Yes.\n    *   Stated quantity? Yes (scoop).\n    *   Calories consistent with 4/4/9? 24*4 + 2*4 + 2*9 = 96 + 8 + 18 = 122. Let's adjust slightly to hit 120 or keep it close.\n    *   Let's use:\n        *   Protein: 24g\n        *   Carbs: 2g\n        *   Fat: 1g\n        *   Calories: (24*4) + (2*4) + (1*9) = 96 + 8 + 9 = 113.\n    *   Let's try:\n        *   Protein: 25g\n        *   Carbs: 2g\n        *   Fat: 1g\n        *   Calories: (25*4) + (2*4) + (1*9) = 100 + 8 + 9 = 117.\n    *   Let's try:\n        *   Protein: 24g\n        *   Carbs: 3g\n        *   Fat: 1g\n        *   Calories: (24*4) + (3*4) + (1*9) = 96 + 12 + 9 = 117.\n    *   Let's go with a standard 120 kcal profile:\n        *   Protein: 24g\n        *   Carbs: 2g\n        *   Fat: 2g\n        *   Calories: (24*4) + (2*4) + (2*9) = 96 + 8 + 18 = 122.\n    *   Actually, the prompt says \"rounded to whole numbers\" and \"Keep calories consistent with 4/4/9\".\n    *   If I use:\n        *   Protein: 24g\n        *   Carbs: 2g\n        *   Fat: 2g\n        *   Calories: 122 kcal.\n\n    *   Name: Whey Protein\n    *   Quantity: 1 scoop, ~30 g\n    *   Calories: 122 kcal\n    *   Protein: 24 g\n    *   Carbs: 2 g\n    *   Fiber: 0 g\n    *   Fat: 2 g\n\n    *Wait, water is also there.*\n    *   Water: 1 cup (approx), 0 kcal, 0 macros. Usually, water is omitted in macro trackers unless it's a significant volume with calories, but I'll stick to the protein as the primary item.*\n\n    *Refining the \"scoop\" size:* Most whey scoops are 30-32g.\n\n    *Final check on rounding:*\n    Protein: 24g\n    Carbs: 2g\n    Fat: 2g\n    Calories: 122 kcal.\n\n    Let's check if 120 kcal is better.\n    Protein: 24g (96)\n    Carbs: 3g (12)\n    Fat: 1g (9)\n    Total: 117.\n\n    Let's go with:\n    Name: Whey Protein\n    Quantity: 1 scoop, ~30 g\n    Calories: 120 kcal\n    Protein: 24 g\n    Carbs: 2 g\n    Fiber: 0 g\n    Fat: 2 g\n    (96 + 8 + 18 = 122. Close enough to 120 for a \"rounded\" estimate).\n\n    Actually, let's do:\n    Protein: 25g\n    Carbs: 2g\n    Fat: 1g\n    Calories: 117 kcal.\n\n    Let's just provide a standard high-quality whey profile.\n\n    Name: Whey Protein\n    Quantity: 1 scoop, ~30 g\n    Calories: 120 kcal\n    Protein: 24 g\n    Carbs: 2 g\n    Fiber: 0 g\n    Fat: 2 g\n\n    Wait, the prompt says \"Keep calories consistent with 4/4/9\".\n    24*4 = 96\n    2*4 = 8\n    2*9 = 18\n    96+8+18 = 122.\n    So Calories must be 122.\n\n    Let's try:\n    Protein: 24g\n    Carbs: 3g\n    Fat: 1g\n    Calories: 96 + 12 + 9 = 117.\n\n    Let's try:\n    Protein: 25g\n    Carbs: 2g\n    Fat: 1g\n    Calories: 100 + 8 + 9 = 117.\n\n    Let's try:\n    Protein: 24g\n    Carbs: 2g\n    Fat: 2g\n    Calories: 122.\n\n    I will use 122 kcal.\n\n    Wait, \"scoop\" is often 30g.\n    Let's provide the list.\n\n    [\n      {\n        \"name\": \"Whey Protein\",\n        \"quantity\": \"1 scoop, ~30 g\",\n        \"calories\": 122,\n        \"protein_g\": 24,\n        \"carbs_g\": 2,\n        \"fiber_g\": 0,\n        \"fat_g\": 2\n      }\n    ]"
+    },
+    {
+      "id": "yogurt_honey",
+      "kind": "text",
+      "ref": {
+        "kcal": 164,
+        "p": 17,
+        "c": 23,
+        "f": 0.7,
+        "fiber": 0
+      },
+      "ms": 16113,
+      "tokens": 2670,
+      "items": [
+        {
+          "name": "Nonfat Plain Greek Yogurt",
+          "quantity": "170 g",
+          "calories": 92,
+          "protein_g": 17,
+          "carbs_g": 6,
+          "fat_g": 0,
+          "fiber_g": 0
+        },
+        {
+          "name": "Honey",
+          "quantity": "1 tbsp",
+          "calories": 60,
+          "protein_g": 0,
+          "carbs_g": 15,
+          "fat_g": 0,
+          "fiber_g": 0
+        }
+      ],
+      "got": {
+        "kcal": 152,
+        "p": 17,
+        "c": 21,
+        "f": 0,
+        "fiber": 0
+      },
+      "pass": true,
+      "kcalErrPct": 7.317073170731707,
+      "macroErr": 2,
+      "thinking": "*   Input: \"170g nonfat plain greek yogurt with 1 tbsp honey\"\n    *   Goal: Convert to a list of food items with estimated macros.\n    *   Constraints:\n        *   One item per distinct food.\n        *   Use stated quantity (170g, 1 tbsp).\n        *   Calories: kcal.\n        *   Macros: grams (rounded to whole numbers).\n        *   Consistency: 4 kcal/g protein, 4 kcal/g carbs, 9 kcal/g fat.\n        *   Carbs/Fiber: fiber_g <= carbs_g.\n        *   Name: Short (2-5 words), Title Case.\n        *   Return empty list if no food.\n\n    *   Item 1: Nonfat Plain Greek Yogurt\n        *   Quantity: 170g\n        *   Nutritional profile (standard nonfat Greek yogurt):\n            *   Protein: ~10g per 100g -> 17g\n            *   Carbs: ~3.6g per 100g -> 6g\n            *   Fat: 0g\n            *   Calories: (17 * 4) + (6 * 4) = 68 + 24 = 92 kcal.\n            *   Fiber: ~0g.\n\n    *   Item 2: Honey\n        *   Quantity: 1 tbsp (~21g)\n        *   Nutritional profile (honey):\n            *   Calories: ~60 kcal per tbsp.\n            *   Carbs: ~17g\n            *   Protein: 0g\n            *   Fat: 0g\n            *   Fiber: 0g.\n\n    *   *Item 1: Nonfat Plain Greek Yogurt*\n        *   Name: Nonfat Plain Greek Yogurt\n        *   Quantity: 170g\n        *   Calories: 92\n        *   Protein: 17\n        *   Carbs: 6\n        *   Fat: 0\n        *   Fiber: 0\n\n    *   *Item 2: Honey*\n        *   Name: Honey\n        *   Quantity: 1 tbsp\n        *   Calories: 60\n        *   Protein: 0\n        *   Carbs: 17\n        *   Fat: 0\n        *   Fiber: 0\n\n    *   Check consistency:\n        *   Yogurt: (17*4) + (6*4) = 68 + 24 = 92. Correct.\n        *   Honey: (17*4) = 68. Wait, honey is usually ~60-64 kcal per tbsp. Let's adjust carbs to match the 4kcal/g rule or use the standard 60kcal.\n        *   If 60 kcal, carbs = 15g.\n        *   Let's re-verify Honey: 1 tbsp honey is ~21g. 21g * 4 kcal/g = 84 kcal.\n        *   Standard nutrition for 1 tbsp honey is ~60 kcal.\n        *   Let's use 60 kcal and 15g carbs to stay consistent with the 4/4/9 rule.\n\n    *   *Refined Item 1: Nonfat Plain Greek Yogurt*\n        *   Calories: 92\n        *   Protein: 17\n        *   Carbs: 6\n        *   Fat: 0\n        *   Fiber: 0\n\n    *   *Refined Item 2: Honey*\n        *   Calories: 60\n        *   Protein: 0\n        *   Carbs: 15\n        *   Fat: 0\n        *   Fiber: 0\n\n    *   Wait, let's check the yogurt again. 170g nonfat Greek yogurt.\n        *   Typical: 10g protein/100g. 170g = 17g protein.\n        *   Typical: 3.6g carbs/100g. 170g = 6.12g -> 6g.\n        *   Calories = (17*4) + (6*4) = 92.\n\n    *   Honey: 1 tbsp.\n        *   Standard: 60 kcal.\n        *   Carbs: 15g.\n\n    *   Final check on names: \"Nonfat Plain Greek Yogurt\", \"Honey\".\n\n    *   JSON format (implied by \"list of food items\"):\n        [\n          {\"name\": \"Nonfat Plain Greek Yogurt\", \"quantity\": \"170 g\", \"calories\": 92, \"protein_g\": 17, \"carbs_g\": 6, \"fat_g\": 0, \"fiber_g\": 0},\n          {\"name\": \"Honey\", \"quantity\": \"1 tbsp\", \"calories\": 60, \"protein_g\": 0, \"carbs_g\": 15, \"fat_g\": 0, \"fiber_g\": 0}\n        ]\n\n    *   Wait, the prompt says \"Convert the user's description... into a list of food items\". It doesn't specify JSON, but usually, these prompts expect a clean list or JSON. I will provide a clean list format.\n\n    *   Let's re-read: \"One item per distinct food... calories in kcal, macros in grams, rounded to whole numbers.\"\n\n    *   Item 1: Nonfat Plain Greek Yogurt\n        *   Quantity: 170 g\n        *   Calories: 92\n        *   Protein: 17 g\n        *   Carbs: 6 g\n        *   Fat: 0 g\n        *   Fiber: 0 g\n\n    *   Item 2: Honey\n        *   Quantity: 1 tbsp\n        *   Calories: 60\n        *   Protein: 0 g\n        *   Carbs: 15 g\n        *   Fat: 0 g\n        *   Fiber: 0 g\n\n    *   Wait, 170g of Greek yogurt is quite a lot of protein. 17g is correct for nonfat.\n    *   Honey 1 tbsp is 15g carbs.\n\n    *   Final check on rounding:\n        *   Yogurt: 170g * (10g protein/100g) = 17g.\n        *   Yogurt: 170g * (3.6g carbs/100g) = 6.12g -> 6g.\n        *   Honey: 1 tbsp = 60 kcal. 60 / 4 = 15g carbs.\n\n    *   Wait, the prompt says \"Keep calories consistent with 4/4/9 kcal per g of protein/carbs/fat.\"\n    *   Yogurt: (17*4) + (6*4) + (0*9) = 68 + 24 = 92.\n    *   Honey: (0*4) + (15*4) + (0*9) = 60.\n\n    *   Result:\n        1. Nonfat Plain Greek Yogurt (170 g): 92 kcal, 17g protein, 6g carbs, 0g fat, 0g fiber\n        2. Honey (1 tbsp): 60 kcal, 0g protein, 15g carbs, 0g fat, 0g fiber\n\n    *   Wait, I should present it as a list.\n\n    *   Let's double check the \"Nonfat Plain Greek Yogurt\" calories.\n        *   Fage Nonfat Greek Yogurt: 100g = 59 kcal, 10g protein, 3.6g carbs, 0g fat.\n        *   170g = 170 * 0.59 = 100.3 kcal.\n        *   Let's re-calculate based on 100g = 59 kcal.\n        *   Protein: 17g.\n        *   Carbs: 6g.\n        *   Fat: 0g.\n        *   Calories: (17*4) + (6*4) = 92.\n        *   Wait, if the label says 59 kcal, but the 4/4/9 rule gives 92, I should prioritize the 4/4/9 rule as per instructions (\"Keep calories consistent with 4/4/9\").\n\n    *   Let's re-verify Honey.\n        *   1 tbsp honey = 60 kcal.\n        *   Carbs = 15g.\n        *   (15*4) = 60. Perfect.\n\n    *   Final List:\n        - Nonfat Plain Greek Yogurt (170 g): 92 kcal, 17g protein, 6g carbs, 0g fat, 0g fiber\n        - Honey (1 tbsp): 60 kcal, 0g protein, 15g carbs, 0g fat, 0g fiber\n\n    *   Wait, the prompt asks for a list of food items with estimated macros. I will format it clearly.\n\n    *   One more check: \"One item per distinct food.\"\n    *   \"Nonfat Plain Greek Yogurt\"\n    *   \"Honey\"\n\n    *   Wait, I'll check the \"Nonfat Plain Greek Yogurt\" protein again.\n        *   Chobani Nonfat Greek Yogurt: 100g = 10g protein, 3.6g carbs.\n        *   170g = 17g protein, 6.12g carbs.\n        *   Rounding to whole numbers: 17g protein, 6g carbs.\n        *   Calories: (17*4) + (6*4) = 92.\n\n    *   Honey:\n        *   1 tbsp = 21g.\n        *   Carbs = 17g.\n        *   If I use 17g carbs, calories = 68.\n        *   If I use 15g carbs, calories = 60.\n        *   Standard honey is 60 kcal per tbsp. I'll go with 60 kcal and 15g carbs.\n\n    *   Wait, the prompt says \"Use the stated quantity\".\n    *   Quantity for yogurt: 170g.\n    *   Quantity for honey: 1 tbsp.\n\n    *   Final check on \"Name\" length:\n        *   \"Nonfat Plain Greek Yogurt\" (4 words) - OK.\n        *   \"Honey\" (1 word) - OK.\n\n    *   Final check on \"fiber_g never exceeds carbs_g\".\n        *   Yogurt: 0 <= 6.\n        *   Honey: 0 <= 15.\n\n    *   Final check on \"calories in kcal, macros in grams, rounded to whole numbers.\"\n\n    *   Let's provide the output."
+    },
+    {
+      "id": "oats_milk",
+      "kind": "text",
+      "ref": {
+        "kcal": 536,
+        "p": 21.3,
+        "c": 80.1,
+        "f": 14.9,
+        "fiber": 10.1
+      },
+      "ms": 18069,
+      "tokens": 2999,
+      "items": [
+        {
+          "name": "Rolled Oats",
+          "quantity": "100 g",
+          "calories": 391,
+          "protein_g": 16,
+          "carbs_g": 66,
+          "fat_g": 7,
+          "fiber_g": 10
+        },
+        {
+          "name": "Whole Milk",
+          "quantity": "250 ml",
+          "calories": 152,
+          "protein_g": 8,
+          "carbs_g": 12,
+          "fat_g": 8,
+          "fiber_g": 0
+        }
+      ],
+      "got": {
+        "kcal": 543,
+        "p": 24,
+        "c": 78,
+        "f": 15,
+        "fiber": 10
+      },
+      "pass": true,
+      "kcalErrPct": 1.3059701492537312,
+      "macroErr": 2.6999999999999993,
+      "thinking": "*   Input: \"100g rolled oats (dry weight) cooked with 250ml whole milk\"\n    *   Goal: Convert to a list of food items with estimated macros.\n    *   Constraints:\n        *   One item per distinct food.\n        *   Use stated quantity.\n        *   Calories: kcal.\n        *   Macros: grams (rounded to whole numbers).\n        *   Consistency: 4 kcal/g protein, 4 kcal/g carbs, 9 kcal/g fat.\n        *   Carbs_g includes fiber.\n        *   Name: Short (2-5 words), Title Case.\n        *   Return empty list if no food.\n\n    *   Item 1: Rolled Oats\n        *   Quantity: 100g\n        *   Nutrition (approximate for 100g dry rolled oats):\n            *   Calories: ~380 kcal\n            *   Protein: ~13g\n            *   Carbs: ~66g\n            *   Fiber: ~10g\n            *   Fat: ~7g\n        *   Check consistency: (13*4) + (66*4) + (7*9) = 52 + 264 + 63 = 379. (Close enough to 380).\n\n    *   Item 2: Whole Milk\n        *   Quantity: 250ml\n        *   Nutrition (approximate for 250ml whole milk):\n            *   Calories: ~150 kcal\n            *   Protein: ~8g\n            *   Carbs: ~12g\n            *   Fiber: ~0g\n            *   Fat: ~8g\n        *   Check consistency: (8*4) + (12*4) + (8*9) = 32 + 48 + 72 = 152. (Close enough to 150).\n\n    *   Item 1: Rolled Oats\n        *   Name: Rolled Oats\n        *   Quantity: 100g\n        *   Calories: 380\n        *   Protein: 13\n        *   Carbs: 66\n        *   Fiber: 10\n        *   Fat: 7\n\n    *   Item 2: Whole Milk\n        *   Name: Whole Milk\n        *   Quantity: 250ml\n        *   Calories: 150\n        *   Protein: 8\n        *   Carbs: 12\n        *   Fiber: 0\n        *   Fat: 8\n\n    *   One item per distinct food? Yes.\n    *   Stated quantity? Yes.\n    *   Calories in kcal? Yes.\n    *   Macros in grams? Yes.\n    *   Rounded to whole numbers? Yes.\n    *   Consistency check? Yes.\n    *   Carbs_g includes fiber? Yes.\n    *   Name short/Title Case? Yes.\n\n    *   Rolled Oats (100g): 389 kcal, 16.9g P, 66.3g C, 10.0g F, 6.6g Fat. Let's refine to standard values.\n    *   Standard 100g Rolled Oats: 389 kcal, 17g P, 66g C, 10g Fiber, 7g Fat.\n    *   Standard 250ml Whole Milk: 150 kcal, 8g P, 12g C, 0g Fiber, 8g Fat.\n\n    *Refining Oats calculation:*\n    17*4 = 68\n    66*4 = 264\n    7*9 = 63\n    Total = 395.\n    Let's adjust to match 389 or 390.\n    If 17g P, 66g C, 6g Fat -> 68 + 264 + 54 = 386.\n    Let's use:\n    Rolled Oats: 389 kcal, 17g Protein, 66g Carbs, 10g Fiber, 7g Fat. (Wait, 17*4 + 66*4 + 7*9 = 395).\n    Let's use:\n    Rolled Oats: 380 kcal, 13g Protein, 66g Carbs, 10g Fiber, 7g Fat. (13*4 + 66*4 + 7*9 = 379). Close enough.\n\n    *Refining Milk calculation:*\n    8*4 + 12*4 + 8*9 = 32 + 48 + 72 = 152.\n    Let's use:\n    Whole Milk: 152 kcal, 8g Protein, 12g Carbs, 0g Fiber, 8g Fat.\n\n    *Final check on Oats:*\n    100g Rolled Oats:\n    Calories: 380\n    Protein: 13\n    Carbs: 66\n    Fiber: 10\n    Fat: 7\n    (13*4 + 66*4 + 7*9 = 379).\n\n    *Final check on Milk:*\n    250ml Whole Milk:\n    Calories: 152\n    Protein: 8\n    Carbs: 12\n    Fiber: 0\n    Fat: 8\n    (8*4 + 12*4 + 8*9 = 152).\n\n    Wait, the prompt says \"Keep calories consistent with 4/4/9 kcal per g of protein/carbs/fat.\"\n    Let's ensure the math is perfect.\n\n    Oats:\n    P: 13 * 4 = 52\n    C: 66 * 4 = 264\n    F: 7 * 9 = 63\n    Total = 379.\n    Let's set Calories to 379.\n\n    Milk:\n    P: 8 * 4 = 32\n    C: 12 * 4 = 48\n    F: 8 * 9 = 72\n    Total = 152.\n    Let's set Calories to 152.\n\n    Wait, standard 100g oats is usually ~380-390.\n    Let's try:\n    Oats: 16g P, 66g C, 7g F.\n    16*4 + 66*4 + 7*9 = 64 + 264 + 63 = 391.\n    Let's use:\n    Rolled Oats: 391 kcal, 16g Protein, 66g Carbs, 10g Fiber, 7g Fat.\n\n    Milk:\n    8g P, 12g C, 8g F.\n    8*4 + 12*4 + 8*9 = 152.\n    Let's use:\n    Whole Milk: 152 kcal, 8g Protein, 12g Carbs, 0g Fiber, 8g Fat.\n\n    Wait, 100g dry oats is a lot. 250ml milk is a standard glass.\n\n    Let's re-verify Oats:\n    100g Rolled Oats:\n    Protein: 16g\n    Carbs: 66g\n    Fiber: 10g\n    Fat: 7g\n    Calories: 391\n\n    250ml Whole Milk:\n    Protein: 8g\n    Carbs: 12g\n    Fiber: 0g\n    Fat: 8g\n    Calories: 152\n\n    Wait, the prompt says \"rounded to whole numbers\".\n    Let's check the math again.\n    Oats: 16*4 + 66*4 + 7*9 = 64 + 264 + 63 = 391.\n    Milk: 8*4 + 12*4 + 8*9 = 32 + 48 + 72 = 152.\n\n    One more check: \"carbs_g is total carbohydrate including fiber\". Yes.\n\n    Final list:\n    1. Rolled Oats\n    2. Whole Milk\n\n    Wait, the prompt says \"One item per distinct food\".\n    Oats and Milk are distinct.\n\n    Let's double check the \"Rolled Oats\" nutrition.\n    USDA: 100g Rolled Oats = 389 kcal, 16.9g P, 66.3g C, 10.0g Fiber, 6.5g Fat.\n    Rounding: 17g P, 66g C, 10g Fiber, 7g Fat.\n    17*4 + 66*4 + 7*9 = 68 + 264 + 63 = 395.\n    Let's use 395 kcal.\n\n    Milk:\n    USDA: 250ml Whole Milk = 152 kcal, 8.1g P, 12.1g C, 0.7g Fiber, 8.1g Fat.\n    Rounding: 8g P, 12g C, 1g Fiber, 8g Fat.\n    8*4 + 12*4 + 8*9 = 32 + 48 + 72 = 152.\n    Wait, if I include fiber in carbs, and milk has a tiny bit of fiber (usually 0), it's fine.\n\n    Let's stick to:\n    Rolled Oats: 395 kcal, 17g P, 66g C, 10g Fiber, 7g Fat.\n    Whole Milk: 152 kcal, 8g P, 12g C, 1g Fiber, 8g Fat.\n\n    Wait, 100g dry oats + 250ml milk.\n    The user says \"cooked with\". This doesn't change the mass of the ingredients added, just the volume/weight of the final dish. The macros remain the sum of the ingredients.\n\n    Final check on names:\n    \"Rolled Oats\"\n    \"Whole Milk\"\n\n    Wait, I should check if \"Rolled Oats\" is 100g or the cooked weight. User said \"100g rolled oats (dry weight)\". Perfect.\n\n    Final check on calories:\n    Oats: 17*4 + 66*4 + 7*9 = 68 + 264 + 63 = 395.\n    Milk: 8*4 + 12*4 + 8*9 = 32 + 48 + 72 = 152.\n\n    Wait, 100g oats is usually ~389 kcal.\n    If I use 16g P, 66g C, 7g F -> 391.\n    Let's use 16g P.\n    16*4 + 66*4 + 7*9 = 64 + 264 + 63 = 391.\n\n    Let's use:\n    Rolled Oats: 391 kcal, 16g Protein, 66g Carbs, 10g Fiber, 7g Fat.\n    Whole Milk: 152 kcal, 8g Protein, 12g Carbs, 1g Fiber, 8g Fat.\n\n    Wait, milk fiber is usually 0.\n    8*4 + 12*4 + 8*9 = 152.\n    If fiber is 0, carbs is 12.\n    Let's use 0g fiber for milk.\n\n    Final check:\n    Rolled Oats: 391 kcal, 16g P, 66g C, 10g Fiber, 7g Fat.\n    Whole Milk: 152 kcal, 8g P, 12g C, 0g Fiber, 8g Fat."
+    },
+    {
+      "id": "big_mac",
+      "kind": "text",
+      "ref": {
+        "kcal": 590,
+        "p": 25,
+        "c": 46,
+        "f": 34,
+        "fiber": 3
+      },
+      "ms": 5662,
+      "tokens": 895,
+      "items": [
+        {
+          "name": "Big Mac",
+          "quantity": "1 burger, ~250 g",
+          "calories": 550,
+          "protein_g": 25,
+          "carbs_g": 45,
+          "fat_g": 30,
+          "fiber_g": 3
+        }
+      ],
+      "got": {
+        "kcal": 550,
+        "p": 25,
+        "c": 45,
+        "f": 30,
+        "fiber": 3
+      },
+      "pass": true,
+      "kcalErrPct": 6.779661016949152,
+      "macroErr": 4,
+      "thinking": "*   Input: \"big mac\"\n    *   Context: Logging engine for a macro tracker (lean muscle building).\n    *   Task: Convert description/photo into a list of food items with estimated macros.\n    *   Constraints:\n        *   One item per distinct food.\n        *   Use stated quantity (assume typical single serving if none).\n        *   Use known published nutrition for branded items.\n        *   Calories in kcal, macros in grams (rounded to whole numbers).\n        *   Consistency: 4 kcal/g (protein), 4 kcal/g (carbs), 9 kcal/g (fat).\n        *   Carbs_g includes fiber.\n        *   Short name (2-5 words, Title Case).\n        *   Return empty list if no food.\n\n    *   Item: McDonald's Big Mac.\n    *   Standard Nutrition (approximate for a standard Big Mac):\n        *   Calories: ~550 kcal\n        *   Fat: ~30 g\n        *   Carbs: ~46 g\n        *   Protein: ~27 g\n    *   *Refining based on standard McDonald's data:*\n        *   Calories: 550 kcal\n        *   Total Fat: 30 g\n        *   Total Carbohydrates: 46 g\n        *   Protein: 27 g\n    *   *Check consistency:*\n        *   (30 * 9) + (46 * 4) + (27 * 4) = 270 + 184 + 108 = 562 kcal.\n        *   The official calorie count is often slightly different due to rounding or specific ingredients, but I need to keep them consistent with the 4/4/9 rule.\n        *   Let's adjust to match 550 kcal:\n            *   Fat: 30g (270 kcal)\n            *   Carbs: 45g (180 kcal)\n            *   Protein: 25g (100 kcal)\n            *   Total: 270 + 180 + 100 = 550 kcal.\n    *   *Fiber:* Usually around 3g.\n\n    *   Name: Big Mac\n    *   Quantity: 1 burger, ~250 g\n    *   Calories: 550 kcal\n    *   Fat: 30 g\n    *   Carbs: 45 g\n    *   Fiber: 3 g\n    *   Protein: 25 g\n\n    *   One item per distinct food? Yes.\n    *   Stated quantity? None given, assume 1 burger.\n    *   Branded item? Yes, used standard values.\n    *   Calories/Macros rounded? Yes.\n    *   Consistency 4/4/9? Yes (30*9 + 45*4 + 25*4 = 270 + 180 + 100 = 550).\n    *   Carbs_g includes fiber? Yes.\n    *   Short name? Yes.\n\n    ```json\n    [\n      {\n        \"name\": \"Big Mac\",\n        \"quantity\": \"1 burger, ~250 g\",\n        \"calories\": 550,\n        \"fat_g\": 30,\n        \"carbs_g\": 45,\n        \"fiber_g\": 3,\n        \"protein_g\": 25\n      }\n    ]\n    ```"
+    },
+    {
+      "id": "pb_tbsp",
+      "kind": "text",
+      "ref": {
+        "kcal": 94,
+        "p": 3.6,
+        "c": 3.5,
+        "f": 8.1,
+        "fiber": 0.8
+      },
+      "ms": 5524,
+      "tokens": 911,
+      "items": [
+        {
+          "name": "Peanut Butter",
+          "quantity": "1 tbsp, ~16 g",
+          "calories": 100,
+          "protein_g": 4,
+          "carbs_g": 3,
+          "fat_g": 8,
+          "fiber_g": 1
+        }
+      ],
+      "got": {
+        "kcal": 100,
+        "p": 4,
+        "c": 3,
+        "f": 8,
+        "fiber": 1
+      },
+      "pass": true,
+      "kcalErrPct": 6.382978723404255,
+      "macroErr": 0.5,
+      "thinking": "*   Input: \"tablespoon of peanut butter\"\n    *   Context: Logging engine for a macro tracker (lean muscle building).\n    *   Task: Convert to a list of food items with estimated macros.\n\n    *   Item: Peanut Butter.\n    *   Quantity: 1 tablespoon.\n    *   Standard weight for 1 tbsp of peanut butter: ~16 grams.\n\n    *   Calories: ~90-100 kcal per tbsp.\n    *   Protein: ~4g.\n    *   Fat: ~8g.\n    *   Carbs: ~3g.\n    *   Fiber: ~1g.\n\n    *   *Refining values based on standard 16g serving:*\n        *   Calories: 95 kcal.\n        *   Protein: 4g.\n        *   Fat: 8g.\n        *   Carbs: 3g.\n        *   Fiber: 1g.\n\n    *   Name: Peanut Butter\n    *   Quantity: 1 tbsp, ~16 g\n    *   Calories: 95 kcal\n    *   Protein: 4 g\n    *   Fat: 8 g\n    *   Carbs: 3 g\n    *   Fiber: 1 g\n\n    *   One item per distinct food? Yes.\n    *   Stated quantity? Yes (1 tbsp).\n    *   Calories consistent with 4/4/9?\n        *   (4 * 4) + (3 * 4) + (8 * 9) = 16 + 12 + 72 = 100.\n        *   Let's adjust slightly to match 95 or 100.\n        *   If 95 kcal: (4*4) + (3*4) + (8*9) = 100. Let's use 100 kcal for consistency.\n    *   Fiber <= Carbs? Yes (1 < 3).\n    *   Title Case? Yes.\n\n    *   Name: Peanut Butter\n    *   Quantity: 1 tbsp, ~16 g\n    *   Calories: 100 kcal\n    *   Protein: 4 g\n    *   Fat: 8 g\n    *   Carbs: 3 g\n    *   Fiber: 1 g\n\n    *Self-Correction on Calories:*\n    Standard peanut butter (1 tbsp) is often cited as 95-100 kcal.\n    4g Protein * 4 = 16\n    3g Carbs * 4 = 12\n    8g Fat * 9 = 72\n    Total = 100.\n\n    Let's check the math again.\n    Protein: 4g\n    Carbs: 3g\n    Fat: 8g\n    Total: 100 kcal.\n\n    Wait, let's check standard peanut butter macros.\n    Usually: 4g Protein, 3g Carbs, 8g Fat.\n    Total: 100 kcal.\n\n    *Final check on instructions:*\n    \"Keep calories consistent with 4/4/9 kcal per g of protein/carbs/fat.\"\n    4*4 + 3*4 + 8*9 = 16 + 12 + 72 = 100.\n\n    Result:\n    - Name: Peanut Butter\n    - Quantity: 1 tbsp, ~16 g\n    - Calories: 100 kcal\n    - Protein: 4 g\n    - Fat: 8 g\n    - Carbs: 3 g\n    - Fiber: 1 g"
+    },
+    {
+      "id": "apple",
+      "kind": "text",
+      "ref": {
+        "kcal": 95,
+        "p": 0.5,
+        "c": 25,
+        "f": 0.3,
+        "fiber": 4.4
+      },
+      "ms": 26930,
+      "tokens": 4224,
+      "items": [
+        {
+          "name": "Apple",
+          "quantity": "1 medium (~182 g)",
+          "calories": 96,
+          "protein_g": 0,
+          "carbs_g": 24,
+          "fat_g": 0,
+          "fiber_g": 4
+        }
+      ],
+      "got": {
+        "kcal": 96,
+        "p": 0,
+        "c": 24,
+        "f": 0,
+        "fiber": 4
+      },
+      "pass": true,
+      "kcalErrPct": 1.0526315789473684,
+      "macroErr": 1,
+      "thinking": "*   Input: \"an apple\"\n    *   Context: Logging engine for a macro tracker (lean muscle building).\n    *   Task: Convert description/photo into a list of food items with estimated macros.\n    *   Constraints:\n        *   One item per distinct food.\n        *   Use stated quantity or assume typical single serving.\n        *   Calories in kcal, macros in grams (rounded to whole numbers).\n        *   Consistency: 4 kcal/g (protein), 4 kcal/g (carbs), 9 kcal/g (fat).\n        *   `carbs_g` includes fiber.\n        *   `fiber_g` <= `carbs_g`.\n        *   Short name (2-5 words, Title Case).\n        *   Return empty list if no food.\n\n    *   Food: Apple.\n    *   Quantity: \"an\" (implies 1 medium apple).\n    *   Typical weight for a medium apple: ~182g (standard USDA value).\n\n    *   Calories: ~95 kcal\n    *   Protein: ~0.5g (round to 1g or 0g? Let's check standard values. Usually ~0.5g. Rounding to whole numbers: 1g or 0g. Let's go with 1g for a medium apple or 0g if very small. Standard is ~0.5g. Let's use 1g to be safe or 0g. Actually, 0.5g rounds to 1g or 0g. Let's use 1g).\n    *   Carbs: ~25g\n    *   Fiber: ~4.5g (round to 5g)\n    *   Fat: ~0.3g (round to 0g)\n\n    *   *Refining Macros for a Medium Apple (approx 182g):*\n        *   Calories: 95 kcal\n        *   Protein: 1g (0.5g rounded)\n        *   Carbs: 25g\n        *   Fiber: 5g\n        *   Fat: 0g\n\n    *   *Check Consistency:*\n        *   Protein: 1g * 4 = 4 kcal\n        *   Carbs: 25g * 4 = 100 kcal\n        *   Fat: 0g * 9 = 0 kcal\n        *   Total: 104 kcal.\n        *   Wait, the standard calorie count for a medium apple is ~95.\n        *   Let's adjust to match 95 kcal.\n        *   If Carbs = 24g (96 kcal), Protein = 0g, Fat = 0g.\n        *   Let's try: Carbs 24g, Fiber 4g, Protein 0g, Fat 0g. Total 96 kcal.\n        *   Or: Carbs 25g, Fiber 5g, Protein 0g, Fat 0g. Total 100 kcal.\n        *   Let's go with a standard medium apple: 95 kcal.\n        *   Protein: 0g\n        *   Carbs: 24g\n        *   Fiber: 4g\n        *   Fat: 0g\n        *   Total: 96 kcal. (Close enough to 95).\n\n    *   *Alternative calculation:*\n        *   Apple (182g): 95 kcal, 0.5g Protein, 25g Carbs, 4.5g Fiber, 0.3g Fat.\n        *   Rounding:\n            *   Protein: 1g (4 kcal)\n            *   Carbs: 25g (100 kcal)\n            *   Fat: 0g (0 kcal)\n            *   Total: 104 kcal.\n        *   Let's use:\n            *   Calories: 95\n            *   Protein: 0\n            *   Carbs: 24\n            *   Fiber: 4\n            *   Fat: 0\n            *   (24 * 4 = 96).\n\n    *   Name: Apple\n    *   Quantity: 1 medium (~182 g)\n    *   Calories: 95\n    *   Protein: 0\n    *   Carbs: 24\n    *   Fiber: 4\n    *   Fat: 0\n\n    *   One item per distinct food? Yes.\n    *   Stated quantity/typical? Yes (1 medium).\n    *   Calories kcal, macros grams? Yes.\n    *   Rounded to whole numbers? Yes.\n    *   Consistency 4/4/9? 24*4 = 96. Close to 95.\n    *   Carbs includes fiber? Yes.\n    *   Fiber <= Carbs? Yes.\n    *   Short name? Yes.\n\n    *Self-Correction on Calories:* If I use 95 kcal, and 24g carbs, the math is 96. If I use 25g carbs, it's 100. I will use 95 kcal and 24g carbs.\n\n    *Wait, let's re-verify standard apple macros:*\n    1 medium apple (182g): 95 kcal, 0.5g protein, 25g carbs, 4.5g fiber, 0.3g fat.\n    Rounding to whole numbers:\n    Protein: 1g (4 kcal)\n    Carbs: 25g (100 kcal)\n    Fat: 0g (0 kcal)\n    Total: 104 kcal.\n    Actually, many trackers just round the final calorie count. But the prompt says \"Keep calories consistent with 4/4/9 kcal per g\".\n    So if Carbs = 24, Protein = 0, Fat = 0, Calories = 96.\n    If Carbs = 25, Protein = 0, Fat = 0, Calories = 100.\n    Let's go with 95 kcal and adjust the macros to fit as closely as possible.\n    24g Carbs * 4 = 96.\n    Let's use:\n    Calories: 95\n    Protein: 0\n    Carbs: 24\n    Fiber: 4\n    Fat: 0\n\n    Wait, 24 * 4 = 96. 95 is very close.\n\n    Let's try:\n    Calories: 95\n    Protein: 0\n    Carbs: 24\n    Fiber: 4\n    Fat: 0\n\n    Actually, let's check a different apple size. A small apple is ~70 kcal.\n    Let's stick to a medium apple.\n\n    Final check on \"an apple\":\n    Name: Apple\n    Quantity: 1 medium (~182 g)\n    Calories: 95\n    Protein: 0\n    Carbs: 24\n    Fiber: 4\n    Fat: 0\n\n    Wait, if I use 24g carbs, 24*4 = 96.\n    If I use 25g carbs, 25*4 = 100.\n    I'll use 95 kcal and 24g carbs.\n\n    One more check: \"Keep calories consistent with 4/4/9 kcal per g\".\n    This means Calories = (Protein * 4) + (Carbs * 4) + (Fat * 9).\n    If Protein=0, Carbs=24, Fat=0 -> Calories = 96.\n    If Protein=0, Carbs=25, Fat=0 -> Calories = 100.\n    I will use 96 kcal to be perfectly consistent with the 4/4/9 rule.\n\n    *Revised:*\n    Name: Apple\n    Quantity: 1 medium (~182 g)\n    Calories: 96\n    Protein: 0\n    Carbs: 24\n    Fiber: 4\n    Fat: 0\n\n    Wait, let's check if 1g protein is better.\n    Protein: 1g (4 kcal)\n    Carbs: 23g (92 kcal)\n    Fat: 0g (0 kcal)\n    Total: 96 kcal.\n    This is also 96.\n\n    Let's go with the most standard representation.\n    Apple: 95 kcal, 0.5g P, 25g C, 4.5g F, 0.3g Fat.\n    Rounded: 1g P, 25g C, 5g Fiber, 0g Fat.\n    Calories: (1*4) + (25*4) + (0*9) = 104.\n    Let's use this. It's more accurate to the actual nutritional content of a medium apple.\n\n    Wait, the prompt says \"rounded to whole numbers\".\n    If I round 95 to 100? No, it says \"Keep calories consistent with 4/4/9\".\n    So I must ensure Calories = P*4 + C*4 + F*9.\n\n    Let's try to get as close to 95 as possible.\n    P: 0\n    C: 24\n    F: 0\n    Total: 96.\n\n    Let's use that.\n\n    Name: Apple\n    Quantity: 1 medium (~182 g)\n    Calories: 96\n    Protein: 0\n    Carbs: 24\n    Fiber: 4\n    Fat: 0\n\n    Wait, I'll check the \"an apple\" description again. It's very simple.\n    I'll provide the list.\n\n    ```json\n    [\n      {\n        \"name\": \"Apple\",\n        \"quantity\": \"1 medium (~182 g)\",\n        \"calories\": 96,\n        \"protein_g\": 0,\n        \"carbs_g\": 24,\n        \"fiber_g\": 4,\n        \"fat_g\": 0\n      }\n    ]\n    ```\n\n    Wait, I should check if I should include the fiber in the carbs.\n    \"carbs_g is total carbohydrate including fiber\". Yes.\n\n    One more check: \"Keep calories consistent with 4/4/9 kcal per g of protein/carbs/fat.\"\n    0*4 + 24*4 + 0*9 = 96. Correct.\n\n    Wait, I'll check if 1g protein is better.\n    0.5g protein rounds to 1g.\n    0.3g fat rounds to 0g.\n    25g carbs rounds to 25g.\n    4.5g fiber rounds to 5g.\n    Calories = 1*4 + 25*4 + 0*9 = 104.\n    This is also a valid rounding.\n    However, 96 is closer to the actual 95.\n\n    Let's go with:\n    Name: Apple\n    Quantity: 1 medium (~182 g)\n    Calories: 96\n    Protein: 0\n    Carbs: 24\n    Fiber: 4\n    Fat: 0\n\n    Actually, I'll use 104 to be more accurate to the actual nutritional profile of a medium apple (which is ~100 kcal).\n    Actually, 95 is the standard. 96 is very close.\n\n    Let's re-read: \"rounded to whole numbers\".\n    If the input is \"an apple\", and I assume a medium apple.\n    USDA: 95 kcal, 0.5g P, 25g C, 4.5g Fiber, 0.3g Fat.\n    Rounding:\n    P: 1\n    C: 25\n    F: 5\n    Fat: 0\n    Calories: 104.\n\n    Let's try to find a way to get 95.\n    If P=0, C=24, Fat=0 -> 96.\n    If P=0, C=23, Fat=0 -> 92.\n    96 is the closest.\n\n    I will use 96.\n\n    Wait, I'll check if I should use \"1 unit\" or \"1 medium\". The prompt says \"assume a typical single serving and state it in 'quantity'\".\n    \"1 medium (~182 g)\" is good.\n\n    Final check on name: \"Apple\" (1 word). Title Case.\n\n    One more thing: \"One item per distinct food.\"\n    Just one item.\n\n    Final check on fiber: \"fiber_g never exceeds carbs_g\". 4 < 24. Correct.\n\n    Wait, I'll check if I should use 100 kcal.\n    If I use 100 kcal, then Carbs = 25, Protein = 0, Fat = 0.\n    25 * 4 = 100.\n    This is very clean.\n    Let's use:\n    Calories: 100\n    Protein: 0\n    Carbs: 25\n    Fiber: 5\n    Fat: 0\n\n    Actually, 95 is the standard. 96 is closer.\n    I'll go with 96.\n\n    Wait, I'll check the prompt again. \"Keep calories consistent with 4/4/9\".\n    If I use 95, it's not consistent with 4/4/9 because 95 is not divisible by 4 or 9 in a way that sums to 95 with whole numbers.\n    (P*4 + C*4 + F*9 = 95)\n    If F=1, 95-9 = 86. 86/4 = 21.5 (not whole).\n    If F=0, 95/4 = 23.75 (not whole).\n    So 95 kcal is impossible with whole numbers and 4/4/9.\n    Therefore, 96 is the closest consistent value.\n\n    Let's double check:\n    P: 0\n    C: 24\n    F: 0\n    0*4 + 24*4 + 0*9 = 96.\n\n    Wait, what if I use 1g protein?\n    P: 1\n    C: 23\n    F: 0\n    1*4 + 23*4 + 0*9 = 96.\n\n    I'll stick with 0 protein as it's closer to 0.5g.\n\n    Final check:\n    Name: Apple\n    Quantity: 1 medium (~182 g)\n    Calories: 96\n    Protein: 0\n    Carbs: 24\n    Fiber: 4\n    Fat: 0\n\n    Wait, I'll check if I should use \"1 apple\" or \"1 medium apple\".\n    \"1 medium (~182 g)\" is more descriptive.\n\n    One last check: \"carbs_g is total carbohydrate including fiber\".\n    Yes, 24 includes 4.\n\n    Wait, I'll check if I should use 100 kcal.\n    Many sources say 100 kcal for a medium apple.\n    If I use 100 kcal:\n    P: 0\n    C: 25\n    F: 5\n    Fat: 0\n    0*4 + 25*4 + 0*9 = 100.\n    This is very common. I'll use this. It's a very standard \"round\" number for an apple.\n\n    Actually, I'll use 96. It's closer to the 95 kcal standard.\n\n    Wait, I'll check the prompt again. \"rounded to whole numbers\".\n    If I round 95 to 100? No, that's rounding the calories.\n    If I round the macros first, then calculate calories?\n    USDA: 0.5g P -> 1g\n    USDA: 25g C -> 25g\n    USDA: 0.3g Fat -> 0g\n    Calories = 1*4 + 25*4 + 0*9 = 104.\n    This is the most logical path: Round the components, then calculate the calories.\n\n    Let's try that.\n    P: 1\n    C: 25\n    F: 5\n    Fat: 0\n    Calories: 104.\n\n    Wait, let's try rounding 0.5 to 0? No, 0.5 usually rounds to 1 in many systems, but sometimes 0.\n    If P=0, C=25, Fat=0, Calories=100.\n    This is very clean.\n\n    Let's go with:\n    Name: Apple\n    Quantity: 1 medium (~182 g)\n    Calories: 100\n    Protein: 0\n    Carbs: 25\n    Fiber: 5\n    Fat: 0\n\n    Wait, I'll check the 95 kcal again.\n    If I use 96 kcal, it's closer to 95.\n    I'll use 96.\n\n    Actually, I'll just use the most standard \"Apple\" entry.\n    Apple (1 medium): 95 kcal, 0g Protein, 25g Carbs, 4g Fiber, 0g Fat.\n    Wait, 25*4 = 100.\n    If I use 24g Carbs, 24*4 = 96.\n    I'll use 96.\n\n    Final decision:\n    Name: Apple\n    Quantity: 1 medium (~182 g)\n    Calories: 96\n    Protein: 0\n    Carbs: 24\n    Fiber: 4\n    Fat: 0"
+    },
+    {
+      "id": "salmon_6oz",
+      "kind": "text",
+      "ref": {
+        "kcal": 350,
+        "p": 37.5,
+        "c": 0,
+        "f": 21,
+        "fiber": 0
+      },
+      "ms": 6545,
+      "tokens": 1102,
+      "items": [
+        {
+          "name": "Baked Salmon Fillet",
+          "quantity": "6 oz (~170 g)",
+          "calories": 334,
+          "protein_g": 34,
+          "carbs_g": 0,
+          "fat_g": 22,
+          "fiber_g": 0
+        }
+      ],
+      "got": {
+        "kcal": 334,
+        "p": 34,
+        "c": 0,
+        "f": 22,
+        "fiber": 0
+      },
+      "pass": true,
+      "kcalErrPct": 4.571428571428571,
+      "macroErr": 3.5,
+      "thinking": "*   Input: \"6 oz baked salmon fillet\"\n    *   Goal: Convert to a list of food items with estimated macros.\n    *   Constraints:\n        *   One item per distinct food.\n        *   Use stated quantity (6 oz).\n        *   Calories in kcal, macros in grams (rounded to whole numbers).\n        *   Consistency: 4 kcal/g (protein), 4 kcal/g (carbs), 9 kcal/g (fat).\n        *   `carbs_g` includes fiber.\n        *   Short name (2-5 words, Title Case).\n        *   Return empty list if no food.\n\n    *   Food: Baked Salmon Fillet.\n    *   Quantity: 6 oz (~170 g).\n    *   Nutritional Profile (Standard for baked salmon):\n        *   Protein: ~20g per 100g.\n        *   Fat: ~13g per 100g.\n        *   Carbs: ~0g.\n    *   Calculation for 6 oz (170g):\n        *   Protein: 170 * 0.20 = 34g.\n        *   Fat: 170 * 0.13 = 22.1g -> 22g.\n        *   Carbs: 0g.\n        *   Calories: (34 * 4) + (22 * 9) = 136 + 198 = 334 kcal.\n\n    *   *Refining Salmon Data (USDA standard for Atlantic Salmon, cooked):*\n        *   Per 100g: 208 kcal, 20g protein, 13g fat, 0g carbs.\n        *   For 6 oz (approx 170g):\n            *   Calories: 208 * 1.7 = 353.6 -> 354 kcal.\n            *   Protein: 20 * 1.7 = 34g.\n            *   Fat: 13 * 1.7 = 22.1 -> 22g.\n            *   Carbs: 0g.\n            *   Fiber: 0g.\n\n    *   *Check consistency:*\n        *   (34 * 4) + (22 * 9) = 136 + 198 = 334.\n        *   Wait, the USDA calories (208) are slightly higher than the sum of macros (20*4 + 13*9 = 80 + 117 = 197). This is common due to rounding or specific nutrient profiles.\n        *   The prompt says: \"Keep calories consistent with 4/4/9 kcal per g of protein/carbs/fat.\"\n        *   So, I must calculate calories based on the macros I provide.\n        *   Protein: 34g\n        *   Fat: 22g\n        *   Carbs: 0g\n        *   Calories: (34 * 4) + (22 * 9) = 334 kcal.\n\n    *   Name: Baked Salmon Fillet\n    *   Quantity: 6 oz (~170 g)\n    *   Calories: 334 kcal\n    *   Protein: 34 g\n    *   Fat: 22 g\n    *   Carbs: 0 g\n    *   Fiber: 0 g\n\n    *   One item per distinct food? Yes.\n    *   Stated quantity? Yes (6 oz).\n    *   Calories in kcal? Yes.\n    *   Macros in grams? Yes.\n    *   Rounded to whole numbers? Yes.\n    *   Consistency 4/4/9? Yes (34*4 + 22*9 = 136 + 198 = 334).\n    *   Carbs_g includes fiber? Yes.\n    *   Short name? Yes.\n\n    ```json\n    [\n      {\n        \"name\": \"Baked Salmon Fillet\",\n        \"quantity\": \"6 oz (~170 g)\",\n        \"calories\": 334,\n        \"protein_g\": 34,\n        \"fat_g\": 22,\n        \"carbs_g\": 0,\n        \"fiber_g\": 0\n      }\n    ]\n    ```"
+    },
+    {
+      "id": "avo_toast",
+      "kind": "text",
+      "ref": {
+        "kcal": 295,
+        "p": 10.5,
+        "c": 36,
+        "f": 13.8,
+        "fiber": 9
+      },
+      "error": "Unexpected end of JSON input",
+      "pass": false
+    },
+    {
+      "id": "black_beans",
+      "kind": "text",
+      "ref": {
+        "kcal": 227,
+        "p": 15.2,
+        "c": 40.8,
+        "f": 0.9,
+        "fiber": 15
+      },
+      "ms": 6235,
+      "tokens": 1042,
+      "items": [
+        {
+          "name": "Cooked Black Beans",
+          "quantity": "1 cup, ~170 g",
+          "calories": 229,
+          "protein_g": 15,
+          "carbs_g": 40,
+          "fat_g": 1,
+          "fiber_g": 15
+        }
+      ],
+      "got": {
+        "kcal": 229,
+        "p": 15,
+        "c": 40,
+        "f": 1,
+        "fiber": 15
+      },
+      "pass": true,
+      "kcalErrPct": 0.881057268722467,
+      "macroErr": 0.7999999999999972,
+      "thinking": "*   Input: \"1 cup cooked black beans\"\n    *   Task: Convert to a list of food items with estimated macros.\n    *   Constraints:\n        *   One item per distinct food.\n        *   Use stated quantity (1 cup).\n        *   Calories in kcal, macros in grams (rounded to whole numbers).\n        *   Consistency: 4 kcal/g (protein), 4 kcal/g (carbs), 9 kcal/g (fat).\n        *   `carbs_g` includes fiber.\n        *   `fiber_g` <= `carbs_g`.\n        *   Short name (2-5 words, Title Case).\n        *   Return empty list if no food.\n\n    *   Food: Black beans (cooked).\n    *   Quantity: 1 cup (~170g - 200g depending on source, but 1 cup is the standard measure).\n    *   Standard Nutrition for 1 cup (approx. 170g) of cooked black beans:\n        *   Calories: ~227 kcal\n        *   Protein: ~15g\n        *   Carbs: ~41g\n        *   Fiber: ~15g\n        *   Fat: ~1g\n\n    *   *Calculation Check:*\n        *   Protein: 15g * 4 = 60 kcal\n        *   Carbs: 41g * 4 = 164 kcal\n        *   Fat: 1g * 9 = 9 kcal\n        *   Total: 60 + 164 + 9 = 233 kcal.\n    *   *Adjustment:* Let's use standard USDA values for 1 cup (approx 170g).\n        *   Calories: 227 kcal\n        *   Protein: 15g\n        *   Carbs: 41g\n        *   Fiber: 15g\n        *   Fat: 1g\n        *   Check: (15*4) + (41*4) + (1*9) = 60 + 164 + 9 = 233.\n        *   Wait, the prompt says \"Keep calories consistent with 4/4/9 kcal per g\".\n        *   If I use 227 kcal, the math is slightly off. I should adjust the macros to match the calorie count or vice versa.\n        *   Let's aim for ~227 kcal.\n        *   Protein: 15g (60)\n        *   Carbs: 40g (160)\n        *   Fat: 1g (9)\n        *   Total: 229 kcal. Close enough.\n\n    *   Name: Cooked Black Beans\n    *   Quantity: 1 cup, ~170 g\n    *   Calories: 229 kcal\n    *   Protein: 15 g\n    *   Carbs: 40 g\n    *   Fiber: 15 g\n    *   Fat: 1 g\n\n    *   One item per distinct food? Yes.\n    *   Stated quantity? Yes (1 cup).\n    *   Calories in kcal? Yes.\n    *   Macros in grams? Yes.\n    *   Rounded to whole numbers? Yes.\n    *   Consistency 4/4/9? (15*4) + (40*4) + (1*9) = 60 + 160 + 9 = 229. Yes.\n    *   Carbs_g includes fiber? Yes (40).\n    *   Fiber_g <= Carbs_g? Yes (15 <= 40).\n    *   Short name? Yes.\n\n    ```json\n    [\n      {\n        \"name\": \"Cooked Black Beans\",\n        \"quantity\": \"1 cup, ~170 g\",\n        \"calories\": 229,\n        \"protein_g\": 15,\n        \"carbs_g\": 40,\n        \"fiber_g\": 15,\n        \"fat_g\": 1\n      }\n    ]\n    ```"
+    },
+    {
+      "id": "chipotle_bowl",
+      "kind": "text",
+      "ref": {
+        "kcal": 675,
+        "p": 51,
+        "c": 72,
+        "f": 20.5,
+        "fiber": 10
+      },
+      "error": "Unexpected end of JSON input",
+      "pass": false
+    },
+    {
+      "id": "dictated_breakfast",
+      "kind": "text",
+      "ref": {
+        "kcal": 254,
+        "p": 15.2,
+        "c": 14.7,
+        "f": 14.5,
+        "fiber": 0.8
+      },
+      "error": "Unexpected end of JSON input",
+      "pass": false
+    },
+    {
+      "id": "not_food",
+      "kind": "text",
+      "ref": {
+        "kcal": 0,
+        "p": 0,
+        "c": 0,
+        "f": 0,
+        "fiber": 0
+      },
+      "expectEmpty": true,
+      "ms": 1079,
+      "tokens": 133,
+      "items": [],
+      "got": {
+        "kcal": 0,
+        "p": 0,
+        "c": 0,
+        "f": 0,
+        "fiber": 0
+      },
+      "pass": true,
+      "kcalErrPct": 0,
+      "thinking": "*   User input: \"went for a 5k run this morning\"\n    *   Context: Logging engine for a macro tracker for someone building lean muscle.\n    *   Task: Convert description/photo into a list of food items with estimated macros.\n\n    *   The input describes a physical activity (running), not a food item or a meal.\n\n    *   \"If the input does not describe food, return an empty list.\"\n\n    *   The input is a run, not food.\n    *   Result: `[]` (Empty list)."
+    },
+    {
+      "id": "label_bar",
+      "kind": "image",
+      "ref": {
+        "kcal": 230,
+        "p": 20,
+        "c": 24,
+        "f": 8,
+        "fiber": 10
+      },
+      "ms": 3610,
+      "tokens": 570,
+      "items": [
+        {
+          "name": "Protein Bar",
+          "quantity": "1 bar, ~60 g",
+          "calories": 230,
+          "protein_g": 20,
+          "carbs_g": 24,
+          "fat_g": 8,
+          "fiber_g": 10
+        }
+      ],
+      "got": {
+        "kcal": 230,
+        "p": 20,
+        "c": 24,
+        "f": 8,
+        "fiber": 10
+      },
+      "pass": true,
+      "kcalErrPct": 0,
+      "macroErr": 0,
+      "thinking": "The user wants me to log the food item from the provided image.\n\n1.  **Analyze the image:** The image is a nutrition facts label for a \"bar\".\n2.  **Extract information:**\n    *   Serving size: 1 bar (60g)\n    *   Calories: 230 kcal\n    *   Total Fat: 8g\n    *   Saturated Fat: 3g\n    *   Sodium: 210mg\n    *   Total Carbohydrate: 24g\n    *   Dietary Fiber: 10g\n    *   Total Sugars: 1g\n    *   Protein: 20g\n3.  **Format the output:**\n    *   Name: \"Protein Bar\" (since it's a bar with 20g protein, it's likely a protein bar).\n    *   Quantity: \"1 bar, ~60 g\"\n    *   Calories: 230 kcal\n    *   Protein: 20g\n    *   Carbs: 24g\n    *   Fiber: 10g\n    *   Fat: 8g\n4.  **Check constraints:**\n    *   One item per distinct food.\n    *   Use stated quantity.\n    *   Use exact values from label.\n    *   Calories consistent with 4/4/9 rule: (20*4) + (24*4) + (8*9) = 80 + 96 + 72 = 248. The label says 230. This is common due to rounding or specific ingredients. I will stick to the label's values as instructed (\"use its exact values scaled to the amount eaten\").\n    *   Fiber <= Carbs. 10 <= 24. Correct.\n    *   Title case name.\n\nFinal list:\n- Name: Protein Bar\n- Quantity: 1 bar, ~60 g\n- Calories: 230 kcal\n- Protein: 20 g\n- Carbs: 24 g\n- Fiber: 10 g\n- Fat: 8 g"
+    },
+    {
+      "id": "label_cereal_1.5cup",
+      "kind": "image",
+      "ref": {
+        "kcal": 337.5,
+        "p": 6.75,
+        "c": 74.25,
+        "f": 4.5,
+        "fiber": 9
+      },
+      "ms": 13725,
+      "tokens": 1617,
+      "items": [
+        {
+          "name": "Food Item",
+          "quantity": "1.5 cups",
+          "calories": 338,
+          "protein_g": 7,
+          "carbs_g": 74,
+          "fat_g": 5,
+          "fiber_g": 9
+        }
+      ],
+      "got": {
+        "kcal": 338,
+        "p": 7,
+        "c": 74,
+        "f": 5,
+        "fiber": 9
+      },
+      "pass": true,
+      "kcalErrPct": 0.14814814814814814,
+      "macroErr": 0.5,
+      "thinking": "The user wants me to extract nutritional information from an image of a nutrition label and a text description.\n\n**Input Analysis:**\n- Image: A nutrition label for a food item.\n    - Serving size: 2/3 cup (40g)\n    - Calories: 150 kcal\n    - Total Fat: 2g\n    - Saturated Fat: 0g\n    - Sodium: 190mg\n    - Total Carbohydrate: 33g\n    - Dietary Fiber: 4g\n    - Total Sugars: 9g\n    - Protein: 3g\n- Text: \"1.5 cups\"\n\n**Calculations:**\n- The label is for 2/3 cup (40g).\n- The user consumed 1.5 cups.\n- Conversion factor: $1.5 / (2/3) = 1.5 \\times 1.5 = 2.25$.\n- So, I need to multiply all values by 2.25.\n\n**Macros Calculation:**\n- Calories: $150 \\times 2.25 = 337.5 \\rightarrow 338$ kcal\n- Total Fat: $2 \\times 2.25 = 4.5 \\rightarrow 5$ g (Wait, let's check rounding. Usually, rounding to nearest whole number. 4.5 -> 5 or 4? Let's stick to standard rounding. 4.5 -> 5).\n- Sodium: $190 \\times 2.25 = 427.5 \\rightarrow 428$ mg (Not requested in output, but good for internal check).\n- Total Carbohydrate: $33 \\times 2.25 = 74.25 \\rightarrow 74$ g\n- Dietary Fiber: $4 \\times 2.25 = 9$ g\n- Protein: $3 \\times 2.25 = 6.75 \\rightarrow 7$ g\n\n**Consistency Check (4/4/9 rule):**\n- Protein: $7 \\text{g} \\times 4 = 28$ kcal\n- Carbs: $74 \\text{g} \\times 4 = 296$ kcal\n- Fat: $5 \\text{g} \\times 9 = 45$ kcal\n- Total: $28 + 296 + 45 = 369$ kcal.\n- The label says 150 kcal per 2/3 cup. $150 \\times 2.25 = 337.5$.\n- If I round 4.5 to 5, the calories jump. If I round 4.5 to 4, the calories are $28 + 296 + 36 = 360$.\n- Let's re-evaluate the rounding.\n- $150 \\times 2.25 = 337.5$. Let's round to 338.\n- Carbs: $33 \\times 2.25 = 74.25 \\rightarrow 74$.\n- Protein: $3 \\times 2.25 = 6.75 \\rightarrow 7$.\n- Fat: $2 \\times 2.25 = 4.5$. To keep calories at 338: $338 - (74 \\times 4) - (7 \\times 4) = 338 - 296 - 28 = 14$. $14 / 9 = 1.55$.\n- This suggests the label's \"2g\" fat might be rounded or the calories are calculated differently.\n- Let's try rounding fat to 4. $74 \\times 4 + 7 \\times 4 + 4 \\times 9 = 296 + 28 + 36 = 360$. Still too high.\n- Let's look at the original label: $33 \\times 4 + 3 \\times 4 + 2 \\times 9 = 132 + 12 + 18 = 162$. The label says 150. This is common due to rounding on labels.\n- I will stick to the calculated values from the label multiplied by the factor.\n- Calories: 338\n- Fat: 5\n- Carbs: 74\n- Fiber: 9\n- Protein: 7\n\n**Item Name:**\nThe image doesn't specify the food name, but it's a nutrition label. I'll call it \"Food Item\" or similar, but usually, I should try to identify it. It looks like a generic cereal or snack. Since I can't see the name, I'll use a generic placeholder or just \"Food Item\". Actually, I'll just call it \"Food Item\" or \"Product\". Wait, the prompt says \"Keep 'name' short (2-5 words), title case.\"\nI'll use \"Food Item\" or \"Product\".\n\nWait, I should check if there's any text in the image I missed. No, just \"Nutrition Facts\".\nI'll use \"Food Item\".\n\n**Final check of values:**\n- Quantity: 1.5 cups (~180 g)\n- Calories: 338\n- Fat: 5\n- Carbs: 74\n- Fiber: 9\n- Protein: 7\n\nWait, let's re-calculate $150 \\times 2.25 = 337.5$. Rounding to 338.\n$33 \\times 2.25 = 74.25 \\rightarrow 74$.\n$3 \\times 2.25 = 6.75 \\rightarrow 7$.\n$2 \\times 2.25 = 4.5 \\rightarrow 5$.\nTotal kcal = $74 \\times 4 + 7 \\times 4 + 5 \\times 9 = 296 + 28 + 45 = 369$.\nIf I round fat down to 4: $296 + 28 + 36 = 360$.\nIf I round carbs down to 73: $73 \\times 4 + 7 \\times 4 + 5 \\times 9 = 292 + 28 + 45 = 365$.\nThe discrepancy is because the original label (150 kcal) is already rounded.\nI will provide the values as calculated.\n\nActually, I'll just provide the list.\n\nItem: Food Item\nQuantity: 1.5 cups\nCalories: 338\nFat: 5\nCarbs: 74\nFiber: 9\nProtein: 7"
+    },
+    {
+      "id": "label_pb_2serv",
+      "kind": "image",
+      "ref": {
+        "kcal": 380,
+        "p": 14,
+        "c": 14,
+        "f": 32,
+        "fiber": 6
+      },
+      "ms": 9341,
+      "tokens": 1510,
+      "items": [
+        {
+          "name": "Food Item",
+          "quantity": "2 servings (64 g)",
+          "calories": 380,
+          "protein_g": 14,
+          "carbs_g": 14,
+          "fat_g": 32,
+          "fiber_g": 6
+        }
+      ],
+      "got": {
+        "kcal": 380,
+        "p": 14,
+        "c": 14,
+        "f": 32,
+        "fiber": 6
+      },
+      "pass": true,
+      "kcalErrPct": 0,
+      "macroErr": 0,
+      "thinking": "The user wants me to extract nutritional information from an image of a nutrition label and a text description.\n\n1.  **Analyze the image:**\n    *   Item: Not explicitly named, but it's a nutrition label.\n    *   Serving size: 2 tbsp (32g)\n    *   Calories: 190 kcal\n    *   Total Fat: 16g\n    *   Saturated Fat: 3g\n    *   Sodium: 140mg\n    *   Total Carbohydrate: 7g\n    *   Dietary Fiber: 3g\n    *   Total Sugars: 2g\n    *   Protein: 7g\n\n2.  **Analyze the text:**\n    *   \"2 servings\"\n\n3.  **Calculate the totals for 2 servings:**\n    *   Calories: 190 * 2 = 380 kcal\n    *   Total Fat: 16 * 2 = 32g\n    *   Saturated Fat: 3 * 2 = 6g\n    *   Sodium: 140 * 2 = 280mg\n    *   Total Carbohydrate: 7 * 2 = 14g\n    *   Dietary Fiber: 3 * 2 = 6g\n    *   Total Sugars: 2 * 2 = 4g\n    *   Protein: 7 * 2 = 14g\n\n4.  **Format the output:**\n    *   Name: Since the product name isn't visible, I'll use a generic name like \"Nutritional Product\" or just \"Food Item\". Looking at the label, it's likely a nut butter or similar given the high fat and low carb content. However, without a name, I'll stick to a generic description or just \"Food Item\". Actually, I'll just call it \"Food Item\" or \"Product\". Let's look for clues. It's a nutrition label. I'll just call it \"Food Item\".\n    *   Quantity: 2 servings (64g)\n    *   Calories: 380 kcal\n    *   Fat: 32g\n    *   Carbs: 14g\n    *   Fiber: 6g\n    *   Protein: 14g\n\n5.  **Refine the name:** Since I can't see the name, I'll just use \"Food Item\". Wait, the prompt says \"Keep 'name' short (2-5 words), title case.\"\n    *   Name: Food Item\n    *   Quantity: 2 servings (64 g)\n    *   Calories: 380 kcal\n    *   Fat: 32 g\n    *   Carbs: 14 g\n    *   Fiber: 6 g\n    *   Protein: 14 g\n\nLet's double check the math.\n190 * 2 = 380.\n16 * 2 = 32.\n7 * 2 = 14.\n3 * 2 = 6.\n7 * 2 = 14.\nEverything looks correct.\n\nWait, the prompt says \"If a nutrition label is visible, use its exact values scaled to the amount eaten.\"\nThe label is for 2 tbsp (32g). The user ate 2 servings.\nSo 2 * 190 = 380.\n2 * 16 = 32.\n2 * 7 = 14.\n2 * 3 = 6.\n2 * 7 = 14.\n\nFinal check on constraints:\n- One item per distinct food.\n- Use stated quantity.\n- Calories in kcal, macros in grams, rounded to whole numbers.\n- Keep calories consistent with 4/4/9 kcal per g of protein/carbs/fat.\n  - Protein: 14g * 4 = 56\n  - Carbs: 14g * 4 = 56\n  - Fat: 32g * 9 = 288\n  - Total: 56 + 56 + 288 = 400.\n  - The label says 190 per serving. 190 * 2 = 380.\n  - Why the discrepancy? 190 * 2 = 380.\n  - Let's check the label's math: 16*9 + 7*4 + 7*4 = 144 + 28 + 28 = 200.\n  - The label says 190. This is common due to rounding or specific ingredients.\n  - I should stick to the label's values scaled.\n  - 190 * 2 = 380.\n\nWait, the prompt says \"Keep calories consistent with 4/4/9 kcal per g of protein/carbs/fat.\"\nIf I use 380 kcal, and the macros are 32g fat, 14g carbs, 14g protein:\n32*9 + 14*4 + 14*4 = 288 + 56 + 56 = 400.\nIf I want it to be 380, I'd have to adjust one of the macros.\nUsually, \"consistent with\" means the sum of macros should equal the calories.\nIf the label says 190, and the macros are 16, 7, 7.\n16*9 + 7*4 + 7*4 = 200.\nThe label is slightly off.\nI will use the scaled values from the label.\nCalories: 380\nFat: 32\nCarbs: 14\nFiber: 6\nProtein: 14\n\nActually, I'll just provide the list.\n\n```json\n[\n  {\n    \"name\": \"Food Item\",\n    \"quantity\": \"2 servings (64 g)\",\n    \"calories\": 380,\n    \"fat_g\": 32,\n    \"carbs_g\": 14,\n    \"fiber_g\": 6,\n    \"protein_g\": 14\n  }\n]\n```\nWait, I don't have a name. I'll just call it \"Food Item\". Or maybe \"Nutritional Product\".\nI'll use \"Food Item\"."
+    },
+    {
+      "id": "label_pizza_whole",
+      "kind": "image",
+      "ref": {
+        "kcal": 930,
+        "p": 42,
+        "c": 102,
+        "f": 39,
+        "fiber": 6
+      },
+      "ms": 5417,
+      "tokens": 867,
+      "items": [
+        {
+          "name": "Pizza",
+          "quantity": "1 container, ~384 g",
+          "calories": 930,
+          "protein_g": 42,
+          "carbs_g": 102,
+          "fat_g": 39,
+          "fiber_g": 6
+        }
+      ],
+      "got": {
+        "kcal": 930,
+        "p": 42,
+        "c": 102,
+        "f": 39,
+        "fiber": 6
+      },
+      "pass": true,
+      "kcalErrPct": 0,
+      "macroErr": 0,
+      "thinking": "*   Input: A photo of a nutrition label for a pizza and a text description \"ate the whole thing\".\n    *   Task: Convert into a list of food items with estimated macros.\n    *   Constraints:\n        *   One item per distinct food.\n        *   Use stated quantity (whole container in this case).\n        *   Use label values scaled to amount eaten.\n        *   Calories: kcal, macros: grams (rounded to whole numbers).\n        *   Consistency: 4 kcal/g protein, 4 kcal/g carbs, 9 kcal/g fat.\n        *   Carbs_g = total carbs (including fiber).\n        *   Fiber_g <= Carbs_g.\n        *   Name: Short (2-5 words), Title Case.\n        *   Empty list if no food.\n\n    *   Serving size: 1/3 pizza (128g).\n    *   Servings per container: 3.\n    *   User ate: \"the whole thing\" (3 servings).\n    *   Nutrition Facts (Per container):\n        *   Calories: 930 kcal\n        *   Total Fat: 39g\n        *   Saturated Fat: 18g\n        *   Sodium: 1920mg\n        *   Total Carbohydrate: 102g\n        *   Dietary Fiber: 6g\n        *   Total Sugars: 12g\n        *   Protein: 42g\n\n    *   Item: Pizza\n    *   Quantity: 1 container (~384 g)\n    *   Calories: 930 kcal\n    *   Fat: 39g\n    *   Carbs: 102g\n    *   Fiber: 6g\n    *   Protein: 42g\n\n    *   Check consistency:\n        *   Protein: 42 * 4 = 168\n        *   Carbs: 102 * 4 = 408\n        *   Fat: 39 * 9 = 351\n        *   Total: 168 + 408 + 351 = 927.\n        *   Label says 930. This is very close (rounding difference).\n\n    *   Name: Pizza\n    *   Quantity: 1 container, ~384 g\n    *   Calories: 930 kcal\n    *   Fat: 39g\n    *   Carbs: 102g\n    *   Fiber: 6g\n    *   Protein: 42g\n\n    *   One item per distinct food? Yes.\n    *   Stated quantity? Yes (whole container).\n    *   Label values? Yes.\n    *   Calories kcal, macros grams? Yes.\n    *   Rounded to whole numbers? Yes.\n    *   Consistency? Yes.\n    *   Carbs_g includes fiber? Yes.\n    *   Name short/Title Case? Yes.\n\n    ```json\n    [\n      {\n        \"name\": \"Pizza\",\n        \"quantity\": \"1 container, ~384 g\",\n        \"calories\": 930,\n        \"fat_g\": 39,\n        \"carbs_g\": 102,\n        \"fiber_g\": 6,\n        \"protein_g\": 42\n      }\n    ]\n    ```"
+    },
+    {
+      "id": "label_yogurt_eu_250g",
+      "kind": "image",
+      "ref": {
+        "kcal": 237.5,
+        "p": 25,
+        "c": 10,
+        "f": 7.5,
+        "fiber": 0
+      },
+      "error": "Unexpected end of JSON input",
+      "pass": false
+    },
+    {
+      "id": "label_muesli_eu_60g",
+      "kind": "image",
+      "ref": {
+        "kcal": 223.2,
+        "p": 6,
+        "c": 39.9,
+        "f": 4.26,
+        "fiber": 5.1
+      },
+      "error": "Unexpected end of JSON input",
+      "pass": false
+    },
+    {
+      "id": "label_chips_photo_half",
+      "kind": "image",
+      "ref": {
+        "kcal": 640,
+        "p": 8,
+        "c": 60,
+        "f": 40,
+        "fiber": 4
+      },
+      "ms": 7126,
+      "tokens": 1140,
+      "items": [
+        {
+          "name": "Chips",
+          "quantity": "4 servings (~112 g)",
+          "calories": 640,
+          "protein_g": 8,
+          "carbs_g": 60,
+          "fat_g": 40,
+          "fiber_g": 4
+        }
+      ],
+      "got": {
+        "kcal": 640,
+        "p": 8,
+        "c": 60,
+        "f": 40,
+        "fiber": 4
+      },
+      "pass": true,
+      "kcalErrPct": 0,
+      "macroErr": 0,
+      "thinking": "*   Input: A photo of a nutrition label and a text description \"half the bag\".\n    *   Label details:\n        *   Servings per container: 8\n        *   Serving size: 1 oz (28g) / About 15 chips\n        *   Calories: 160\n        *   Total Fat: 10g\n        *   Saturated Fat: 1.5g\n        *   Sodium: 170mg\n        *   Total Carbohydrate: 15g\n        *   Dietary Fiber: 1g\n        *   Total Sugars: 0g\n        *   Protein: 2g\n    *   User input: \"half the bag\".\n    *   Calculation:\n        *   Total servings in bag = 8.\n        *   Half the bag = 4 servings.\n        *   Calories: 160 * 4 = 640\n        *   Total Fat: 10 * 4 = 40g\n        *   Saturated Fat: 1.5 * 4 = 6g\n        *   Sodium: 170 * 4 = 680mg\n        *   Total Carbohydrate: 15 * 4 = 60g\n        *   Dietary Fiber: 1 * 4 = 4g\n        *   Total Sugars: 0 * 4 = 0g\n        *   Protein: 2 * 4 = 8g\n    *   Food name: The label doesn't specify the chip flavor, but it's a bag of chips. I'll call it \"Potato Chips\" or just \"Chips\". Since the label is generic, \"Potato Chips\" is a safe bet, but \"Chips\" is more accurate to the label. Let's look at the label again. It's blurry but looks like a standard chip bag.\n\n    *   Name: Chips\n    *   Quantity: 4 servings (or 4 oz / 112g)\n    *   Calories: 640\n    *   Fat: 40g\n    *   Carbs: 60g\n    *   Fiber: 4g\n    *   Protein: 8g\n\n    *   One item per distinct food.\n    *   Use stated quantity (half the bag).\n    *   Use label values scaled.\n    *   Calories consistent with 4/4/9.\n        *   Protein: 8g * 4 = 32\n        *   Carbs: 60g * 4 = 240\n        *   Fat: 40g * 9 = 360\n        *   32 + 240 + 360 = 632. The label says 160 per serving. 160 * 4 = 640. The discrepancy (8 kcal) is common in nutrition labels due to rounding. I will stick to the scaled label values.\n    *   Carbs_g includes fiber.\n    *   Name short (2-5 words), Title Case.\n\n    *   Name: Chips\n    *   Quantity: 4 servings (~112 g)\n    *   Calories: 640\n    *   Fat: 40g\n    *   Carbs: 60g\n    *   Fiber: 4g\n    *   Protein: 8g\n\n    Wait, the prompt says \"Use the stated quantity; if none is given, assume a typical single serving and state it in 'quantity'\". The user said \"half the bag\". The bag has 8 servings. So 4 servings.\n\n    Let's double check the label.\n    Calories: 160\n    Fat: 10g\n    Carbs: 15g\n    Fiber: 1g\n    Protein: 2g\n\n    Calculation for 4 servings:\n    Calories: 640\n    Fat: 40g\n    Carbs: 60g\n    Fiber: 4g\n    Protein: 8g\n\n    Final check on formatting:\n    - One item per distinct food.\n    - Calories in kcal, macros in grams, rounded to whole numbers.\n    - Keep \"name\" short (2-5 words), title case.\n\n    Result:\n    [\n      {\n        \"name\": \"Chips\",\n        \"quantity\": \"4 servings (~112 g)\",\n        \"calories\": 640,\n        \"fat_g\": 40,\n        \"carbs_g\": 60,\n        \"fiber_g\": 4,\n        \"protein_g\": 8\n      }\n    ]"
+    }
+  ]
+}

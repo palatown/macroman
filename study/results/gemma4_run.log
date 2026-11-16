@@ -1,0 +1,108 @@
+
+=== gemma4:12b+nothink ===
+PASS eggs_butter              194 kcal P12 C2 F16 fib0  (ref 177/12.6/0.7/13.3/0)  31614ms
+PASS chicken_200g             330 kcal P62 C0 F7 fib0  (ref 330/62/0/7.2/0)  568ms
+PASS rice_cup                 205 kcal P4 C45 F0 fib1  (ref 205/4.3/44.5/0.4/0.6)  619ms
+PASS banana                   105 kcal P1 C27 F0 fib3  (ref 105/1.3/27/0.4/3.1)  542ms
+PASS whey                     120 kcal P24 C3 F1 fib1  (ref 120/24/3/1.5/0)  560ms
+PASS yogurt_honey             166 kcal P18 C23 F0 fib0  (ref 164/17/23/0.7/0)  875ms
+PASS oats_milk                530 kcal P21 C78 F15 fib10  (ref 536/21.3/80.1/14.9/10.1)  896ms
+PASS big_mac                  550 kcal P26 C46 F30 fib3  (ref 590/25/46/34/3)  549ms
+PASS pb_tbsp                  95 kcal P4 C3 F8 fib1  (ref 94/3.6/3.5/8.1/0.8)  585ms
+PASS apple                    97 kcal P1 C25 F0 fib5  (ref 95/0.5/25/0.3/4.4)  561ms
+PASS salmon_6oz               350 kcal P34 C0 F24 fib0  (ref 350/37.5/0/21/0)  600ms
+FAIL avo_toast                340 kcal P11 C41 F18 fib13  (ref 295/10.5/36/13.8/9)  1129ms
+PASS black_beans              227 kcal P15 C41 F1 fib15  (ref 227/15.2/40.8/0.9/15)  633ms
+FAIL chipotle_bowl            850 kcal P45 C95 F32 fib12  (ref 675/51/72/20.5/10)  659ms
+FAIL dictated_breakfast       310 kcal P14 C16 F22 fib2  (ref 254/15.2/14.7/14.5/0.8)  1081ms
+PASS not_food                 0 kcal P0 C0 F0 fib0  (ref 0/0/0/0/0)  175ms
+PASS label_bar                230 kcal P20 C24 F8 fib10  (ref 230/20/24/8/10)  777ms
+FAIL label_cereal_1.5cup      225 kcal P5 C50 F3 fib6  (ref 337.5/6.75/74.25/4.5/9)  709ms
+PASS label_pb_2serv           380 kcal P14 C14 F32 fib6  (ref 380/14/14/32/6)  706ms
+PASS label_pizza_whole        930 kcal P42 C102 F39 fib6  (ref 930/42/102/39/6)  751ms
+PASS label_yogurt_eu_250g     238 kcal P25 C10 F8 fib0  (ref 237.5/25/10/7.5/0)  691ms
+FAIL label_muesli_eu_60g      223 kcal P6 C35 F4 fib5  (ref 223.2/6/39.9/4.26/5.1)  679ms
+FAIL label_chips_photo_half   80 kcal P1 C15 F5 fib1  (ref 640/8/60/40/4)  836ms
+text: 13/16 pass, median kcal error 1.1%, avg 2603 ms
+image: 4/7 pass, median kcal error 0.1%, avg 736 ms
+
+=== gemma4:12b+think ===
+PASS eggs_butter              178 kcal P12 C1 F14 fib0  (ref 177/12.6/0.7/13.3/0)  10665ms
+PASS chicken_200g             311 kcal P62 C0 F7 fib0  (ref 330/62/0/7.2/0)  3999ms
+PASS rice_cup                 205 kcal P4 C45 F1 fib1  (ref 205/4.3/44.5/0.4/0.6)  4683ms
+PASS banana                   112 kcal P1 C27 F0 fib3  (ref 105/1.3/27/0.4/3.1)  14472ms
+PASS whey                     122 kcal P24 C2 F2 fib0  (ref 120/24/3/1.5/0)  10342ms
+PASS yogurt_honey             152 kcal P17 C21 F0 fib0  (ref 164/17/23/0.7/0)  16113ms
+PASS oats_milk                543 kcal P24 C78 F15 fib10  (ref 536/21.3/80.1/14.9/10.1)  18069ms
+PASS big_mac                  550 kcal P25 C45 F30 fib3  (ref 590/25/46/34/3)  5662ms
+PASS pb_tbsp                  100 kcal P4 C3 F8 fib1  (ref 94/3.6/3.5/8.1/0.8)  5524ms
+PASS apple                    96 kcal P0 C24 F0 fib4  (ref 95/0.5/25/0.3/4.4)  26930ms
+PASS salmon_6oz               334 kcal P34 C0 F22 fib0  (ref 350/37.5/0/21/0)  6545ms
+FAIL avo_toast                Unexpected end of JSON input  (ref 295/10.5/36/13.8/9)  -ms
+PASS black_beans              229 kcal P15 C40 F1 fib15  (ref 227/15.2/40.8/0.9/15)  6235ms
+FAIL chipotle_bowl            Unexpected end of JSON input  (ref 675/51/72/20.5/10)  -ms
+FAIL dictated_breakfast       Unexpected end of JSON input  (ref 254/15.2/14.7/14.5/0.8)  -ms
+PASS not_food                 0 kcal P0 C0 F0 fib0  (ref 0/0/0/0/0)  1079ms
+PASS label_bar                230 kcal P20 C24 F8 fib10  (ref 230/20/24/8/10)  3610ms
+PASS label_cereal_1.5cup      338 kcal P7 C74 F5 fib9  (ref 337.5/6.75/74.25/4.5/9)  13725ms
+PASS label_pb_2serv           380 kcal P14 C14 F32 fib6  (ref 380/14/14/32/6)  9341ms
+PASS label_pizza_whole        930 kcal P42 C102 F39 fib6  (ref 930/42/102/39/6)  5417ms
+FAIL label_yogurt_eu_250g     Unexpected end of JSON input  (ref 237.5/25/10/7.5/0)  -ms
+FAIL label_muesli_eu_60g      Unexpected end of JSON input  (ref 223.2/6/39.9/4.26/5.1)  -ms
+PASS label_chips_photo_half   640 kcal P8 C60 F40 fib4  (ref 640/8/60/40/4)  7126ms
+text: 13/16 pass, median kcal error 4.6%, avg 10024 ms
+image: 5/7 pass, median kcal error 0%, avg 7844 ms
+
+=== gemma4:26b-a4b+nothink ===
+PASS eggs_butter              176 kcal P12 C1 F14 fib0  (ref 177/12.6/0.7/13.3/0)  33992ms
+PASS chicken_200g             330 kcal P62 C0 F7 fib0  (ref 330/62/0/7.2/0)  990ms
+PASS rice_cup                 205 kcal P4 C45 F0 fib1  (ref 205/4.3/44.5/0.4/0.6)  1123ms
+PASS banana                   105 kcal P1 C27 F0 fib3  (ref 105/1.3/27/0.4/3.1)  1016ms
+PASS whey                     120 kcal P24 C3 F1 fib0  (ref 120/24/3/1.5/0)  1649ms
+PASS yogurt_honey             164 kcal P17 C23 F0 fib0  (ref 164/17/23/0.7/0)  1668ms
+PASS oats_milk                520 kcal P21 C78 F15 fib10  (ref 536/21.3/80.1/14.9/10.1)  1657ms
+PASS big_mac                  590 kcal P25 C46 F34 fib3  (ref 590/25/46/34/3)  1059ms
+PASS pb_tbsp                  94 kcal P4 C3 F8 fib1  (ref 94/3.6/3.5/8.1/0.8)  995ms
+PASS apple                    95 kcal P0 C25 F0 fib4  (ref 95/0.5/25/0.3/4.4)  1020ms
+PASS salmon_6oz               354 kcal P34 C0 F23 fib0  (ref 350/37.5/0/21/0)  1087ms
+PASS avo_toast                300 kcal P10 C34 F14 fib9  (ref 295/10.5/36/13.8/9)  2292ms
+PASS black_beans              227 kcal P15 C41 F1 fib15  (ref 227/15.2/40.8/0.9/15)  1066ms
+FAIL chipotle_bowl            850 kcal P45 C95 F35 fib12  (ref 675/51/72/20.5/10)  1039ms
+FAIL dictated_breakfast       290 kcal P15 C16 F19 fib1  (ref 254/15.2/14.7/14.5/0.8)  1619ms
+PASS not_food                 0 kcal P0 C0 F0 fib0  (ref 0/0/0/0/0)  375ms
+PASS label_bar                230 kcal P20 C24 F8 fib10  (ref 230/20/24/8/10)  3147ms
+PASS label_cereal_1.5cup      338 kcal P7 C74 F4 fib9  (ref 337.5/6.75/74.25/4.5/9)  2793ms
+PASS label_pb_2serv           380 kcal P14 C14 F32 fib6  (ref 380/14/14/32/6)  2763ms
+PASS label_pizza_whole        930 kcal P42 C102 F39 fib6  (ref 930/42/102/39/6)  2757ms
+PASS label_yogurt_eu_250g     238 kcal P25 C10 F8 fib0  (ref 237.5/25/10/7.5/0)  1146ms
+FAIL label_muesli_eu_60g      223 kcal P6 C35 F4 fib5  (ref 223.2/6/39.9/4.26/5.1)  1182ms
+FAIL label_chips_photo_half   320 kcal P4 C30 F20 fib2  (ref 640/8/60/40/4)  1235ms
+text: 14/16 pass, median kcal error 0%, avg 3290 ms
+image: 5/7 pass, median kcal error 0.1%, avg 2146 ms
+
+=== gemma4:26b-a4b+think ===
+FAIL eggs_butter              Unexpected end of JSON input  (ref 177/12.6/0.7/13.3/0)  -ms
+PASS chicken_200g             329 kcal P62 C0 F9 fib0  (ref 330/62/0/7.2/0)  11531ms
+FAIL rice_cup                 236 kcal P4 C55 F0 fib1  (ref 205/4.3/44.5/0.4/0.6)  8089ms
+PASS banana                   105 kcal P1 C27 F0 fib3  (ref 105/1.3/27/0.4/3.1)  6573ms
+PASS whey                     117 kcal P24 C3 F1 fib0  (ref 120/24/3/1.5/0)  11975ms
+PASS yogurt_honey             160 kcal P17 C23 F0 fib0  (ref 164/17/23/0.7/0)  10537ms
+PASS oats_milk                531 kcal P21 C78 F15 fib10  (ref 536/21.3/80.1/14.9/10.1)  13017ms
+PASS big_mac                  590 kcal P25 C46 F34 fib3  (ref 590/25/46/34/3)  5348ms
+PASS pb_tbsp                  100 kcal P4 C3 F8 fib1  (ref 94/3.6/3.5/8.1/0.8)  5296ms
+PASS apple                    100 kcal P0 C25 F0 fib4  (ref 95/0.5/25/0.3/4.4)  8273ms
+FAIL salmon_6oz               253 kcal P34 C0 F13 fib0  (ref 350/37.5/0/21/0)  5990ms
+FAIL avo_toast                346 kcal P10 C36 F18 fib11  (ref 295/10.5/36/13.8/9)  22434ms
+PASS black_beans              233 kcal P15 C41 F1 fib15  (ref 227/15.2/40.8/0.9/15)  5889ms
+FAIL chipotle_bowl            Unexpected end of JSON input  (ref 675/51/72/20.5/10)  -ms
+PASS dictated_breakfast       255 kcal P15 C15 F15 fib1  (ref 254/15.2/14.7/14.5/0.8)  19848ms
+PASS not_food                 0 kcal P0 C0 F0 fib0  (ref 0/0/0/0/0)  1544ms
+PASS label_bar                230 kcal P20 C24 F8 fib10  (ref 230/20/24/8/10)  11297ms
+FAIL label_cereal_1.5cup      369 kcal P7 C74 F5 fib9  (ref 337.5/6.75/74.25/4.5/9)  49578ms
+FAIL label_pb_2serv           400 kcal P14 C14 F32 fib6  (ref 380/14/14/32/6)  23473ms
+PASS label_pizza_whole        930 kcal P42 C102 F39 fib6  (ref 930/42/102/39/6)  9533ms
+FAIL label_yogurt_eu_250g     212 kcal P25 C10 F8 fib0  (ref 237.5/25/10/7.5/0)  31628ms
+FAIL label_muesli_eu_60g      200 kcal P6 C35 F4 fib5  (ref 223.2/6/39.9/4.26/5.1)  37770ms
+PASS label_chips_photo_half   632 kcal P8 C60 F40 fib4  (ref 640/8/60/40/4)  15970ms
+text: 11/16 pass, median kcal error 2.5%, avg 9739 ms
+image: 3/7 pass, median kcal error 5.3%, avg 25607 ms

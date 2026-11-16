@@ -1,0 +1,30 @@
+{
+  "_note": "ref = summed totals for the whole input. Text refs are USDA/published typical values (an estimate, not ground truth). Label refs are exact: label values times the stated amount.",
+  "text": [
+    { "id": "eggs_butter", "input": "2 large eggs scrambled with a tsp of butter", "ref": { "kcal": 177, "p": 12.6, "c": 0.7, "f": 13.3, "fiber": 0 } },
+    { "id": "chicken_200g", "input": "200g cooked chicken breast", "ref": { "kcal": 330, "p": 62, "c": 0, "f": 7.2, "fiber": 0 } },
+    { "id": "rice_cup", "input": "1 cup cooked white rice", "ref": { "kcal": 205, "p": 4.3, "c": 44.5, "f": 0.4, "fiber": 0.6 } },
+    { "id": "banana", "input": "a medium banana", "ref": { "kcal": 105, "p": 1.3, "c": 27, "f": 0.4, "fiber": 3.1 } },
+    { "id": "whey", "input": "scoop of whey protein in water", "ref": { "kcal": 120, "p": 24, "c": 3, "f": 1.5, "fiber": 0 } },
+    { "id": "yogurt_honey", "input": "170g nonfat plain greek yogurt with 1 tbsp honey", "ref": { "kcal": 164, "p": 17, "c": 23, "f": 0.7, "fiber": 0 } },
+    { "id": "oats_milk", "input": "100g rolled oats (dry weight) cooked with 250ml whole milk", "ref": { "kcal": 536, "p": 21.3, "c": 80.1, "f": 14.9, "fiber": 10.1 } },
+    { "id": "big_mac", "input": "big mac", "ref": { "kcal": 590, "p": 25, "c": 46, "f": 34, "fiber": 3 } },
+    { "id": "pb_tbsp", "input": "tablespoon of peanut butter", "ref": { "kcal": 94, "p": 3.6, "c": 3.5, "f": 8.1, "fiber": 0.8 } },
+    { "id": "apple", "input": "an apple", "ref": { "kcal": 95, "p": 0.5, "c": 25, "f": 0.3, "fiber": 4.4 } },
+    { "id": "salmon_6oz", "input": "6 oz baked salmon fillet", "ref": { "kcal": 350, "p": 37.5, "c": 0, "f": 21, "fiber": 0 } },
+    { "id": "avo_toast", "input": "two slices of whole wheat toast with half an avocado, and a coffee with a splash of milk", "ref": { "kcal": 295, "p": 10.5, "c": 36, "f": 13.8, "fiber": 9 } },
+    { "id": "black_beans", "input": "1 cup cooked black beans", "ref": { "kcal": 227, "p": 15.2, "c": 40.8, "f": 0.9, "fiber": 15 } },
+    { "id": "chipotle_bowl", "input": "chipotle chicken burrito bowl with white rice, black beans, fajita veggies, mild salsa and cheese", "ref": { "kcal": 675, "p": 51, "c": 72, "f": 20.5, "fiber": 10 } },
+    { "id": "dictated_breakfast", "input": "uh 2 eggs and like a piece of toast with butter", "ref": { "kcal": 254, "p": 15.2, "c": 14.7, "f": 14.5, "fiber": 0.8 } },
+    { "id": "not_food", "input": "went for a 5k run this morning", "ref": { "kcal": 0, "p": 0, "c": 0, "f": 0, "fiber": 0 }, "expectEmpty": true }
+  ],
+  "image": [
+    { "id": "label_bar", "image": "images/bar.png", "input": "", "ref": { "kcal": 230, "p": 20, "c": 24, "f": 8, "fiber": 10 }, "exact": true },
+    { "id": "label_cereal_1.5cup", "image": "images/cereal.png", "input": "1.5 cups", "ref": { "kcal": 337.5, "p": 6.75, "c": 74.25, "f": 4.5, "fiber": 9 }, "exact": true },
+    { "id": "label_pb_2serv", "image": "images/pb.png", "input": "2 servings", "ref": { "kcal": 380, "p": 14, "c": 14, "f": 32, "fiber": 6 }, "exact": true },
+    { "id": "label_pizza_whole", "image": "images/pizza.png", "input": "ate the whole thing", "ref": { "kcal": 930, "p": 42, "c": 102, "f": 39, "fiber": 6 }, "exact": true },
+    { "id": "label_yogurt_eu_250g", "image": "images/yogurt_eu.png", "input": "250g", "ref": { "kcal": 237.5, "p": 25, "c": 10, "f": 7.5, "fiber": 0 }, "exact": true },
+    { "id": "label_muesli_eu_60g", "image": "images/muesli_eu.png", "input": "60g with nothing else", "ref": { "kcal": 223.2, "p": 6, "c": 39.9, "f": 4.26, "fiber": 5.1 }, "exact": true, "_why": "EU carbs exclude fibre; app rule says add fibre to carbs: (58+8.5)*0.6" },
+    { "id": "label_chips_photo_half", "image": "images/chips_photo.png", "input": "half the bag", "ref": { "kcal": 640, "p": 8, "c": 60, "f": 40, "fiber": 4 }, "exact": true }
+  ]
+}
