@@ -112,6 +112,7 @@ fun FoodConfirmSheet(
     onDelete: (Long) -> Unit,
     onDismiss: () -> Unit,
     onRescaleAmount: suspend (String, Double) -> String,
+    onDuplicate: (FoodDraft) -> Unit,
 ) {
     val rows = remember(initial) { mutableStateListOf(*initial.mapIndexed(ScaledFood::of).toTypedArray()) }
     val items = rows.map { it.draft() }
@@ -209,6 +210,7 @@ fun FoodConfirmSheet(
                 saveEnabled = items.isNotEmpty(),
                 onSave = { onSave(items) },
                 onDelete = editing?.let { id -> { onDelete(id) } },
+                onDuplicate = editing?.let { { onDuplicate(items.single()) } },
                 onDismiss = onDismiss,
             )
         }
@@ -222,6 +224,7 @@ fun WorkoutConfirmSheet(
     onSave: (List<WorkoutDraft>) -> Unit,
     onDelete: (Long) -> Unit,
     onDismiss: () -> Unit,
+    onDuplicate: (WorkoutDraft) -> Unit,
 ) {
     val items = remember(initial) { mutableStateListOf(*initial.toTypedArray()) }
     val editing = initial.singleOrNull()?.id?.takeIf { it != 0L }
@@ -260,6 +263,7 @@ fun WorkoutConfirmSheet(
                 saveEnabled = items.isNotEmpty(),
                 onSave = { onSave(items.toList()) },
                 onDelete = editing?.let { id -> { onDelete(id) } },
+                onDuplicate = editing?.let { { onDuplicate(items.single()) } },
                 onDismiss = onDismiss,
             )
         }
@@ -272,6 +276,7 @@ private fun SheetButtons(
     saveEnabled: Boolean,
     onSave: () -> Unit,
     onDelete: (() -> Unit)?,
+    onDuplicate: (() -> Unit)?,
     onDismiss: () -> Unit,
 ) {
     Row(
@@ -281,6 +286,9 @@ private fun SheetButtons(
     ) {
         if (onDelete != null) {
             TextButton(onClick = onDelete) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+        }
+        if (onDuplicate != null) {
+            TextButton(onClick = onDuplicate) { Text("Duplicate") }
         }
         Row(Modifier.weight(1f)) {}
         OutlinedButton(onClick = onDismiss) { Text("Cancel") }

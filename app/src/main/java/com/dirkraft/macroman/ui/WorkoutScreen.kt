@@ -112,6 +112,7 @@ fun WorkoutScreen(vm: MainViewModel, snackbar: SnackbarHostState, modifier: Modi
             onSave = vm::saveWorkouts,
             onDelete = { id -> vm.deleteWorkout(id); vm.workoutDrafts = null },
             onDismiss = { vm.workoutDrafts = null },
+            onDuplicate = vm::duplicateWorkout,
         )
     }
 }

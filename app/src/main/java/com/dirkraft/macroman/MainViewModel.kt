@@ -155,6 +155,20 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun editFood(entry: FoodEntry) { foodDrafts = listOf(entry.toDraft()) }
     fun editWorkout(entry: WorkoutEntry) { workoutDrafts = listOf(entry.toDraft()) }
 
+    /**
+     * Turns the entry open in the editor into a new, unsaved one for today, keeping any unsaved changes, so it
+     * can be adjusted before logging. The original entry is left as it was.
+     */
+    fun duplicateFood(draft: FoodDraft) {
+        today()
+        foodDrafts = listOf(draft.copy(id = 0))
+    }
+
+    fun duplicateWorkout(draft: WorkoutDraft) {
+        today()
+        workoutDrafts = listOf(draft.copy(id = 0))
+    }
+
     fun saveFood(drafts: List<FoodDraft>) {
         foodDrafts = null
         val dayKey = day.value.toString()
