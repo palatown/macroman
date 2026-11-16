@@ -26,8 +26,14 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import kotlinx.coroutines.flow.combine
+import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
+import kotlin.math.abs
+import kotlin.math.exp
+import kotlin.math.pow
 
 /** An editable food row in the confirm sheet. Strings so text fields can hold partial input like "12.". */
 data class FoodDraft(
@@ -65,6 +71,33 @@ fun WorkoutEntry.toDraft() = WorkoutDraft(
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
+private const val SUGGEST_DAYS = 7L
+private const val SUGGEST_MAX = 10
+/** How quickly a past log stops counting as "around now": weight 0.6 at 1.5 h away, 0.14 at 3 h, near 0 by 5 h. */
+private const val SUGGEST_SPREAD_MIN = 90.0
+
+/**
+ * Ranks each distinct food (by name) by the sum of its logs' closeness in time of day to [now], so a food eaten
+ * around now on several days beats one eaten around now once. Each food is offered as its most recent entry.
+ */
+internal fun suggestFood(entries: List<FoodEntry>, now: LocalTime): List<FoodEntry> {
+    val zone = ZoneId.systemDefault()
+    val nowMin = now.toSecondOfDay() / 60.0
+    return entries
+        .groupBy { it.name.trim().lowercase() }
+        .map { (_, logs) ->
+            val score = logs.sumOf { e ->
+                val t = Instant.ofEpochMilli(e.time).atZone(zone).toLocalTime().toSecondOfDay() / 60.0
+                val diff = abs(t - nowMin).let { minOf(it, 1440 - it) } // wraps around midnight
+                exp(-0.5 * (diff / SUGGEST_SPREAD_MIN).pow(2))
+            }
+            logs.maxBy { it.time } to score
+        }
+        .sortedByDescending { it.second }
+        .take(SUGGEST_MAX)
+        .map { it.first }
+}
+
 class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val macroman = app as MacromanApp
     private val dao = macroman.db.dao()
@@ -80,7 +113,14 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     val waterMl: StateFlow<Int> = day.flatMapLatest { dao.waterMl(it.toString()) }
         .map { it ?: 0 }
         .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
-    val frequentFood =dao.frequentFood().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    /** Time of day the suggestions are ranked for; refreshed each time the app comes to the front. */
+    private val clock = MutableStateFlow(LocalTime.now())
+
+    /** The one-tap re-log row: foods from the previous week, ranked by how often they were eaten around this time. */
+    val suggestedFood: StateFlow<List<FoodEntry>> = day
+        .flatMapLatest { d -> dao.foodBetween(d.minusDays(SUGGEST_DAYS).toString(), d.minusDays(1).toString()) }
+        .combine(clock) { entries, now -> suggestFood(entries, now) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     val frequentWorkouts = dao.frequentWorkouts().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     var busy by mutableStateOf(false)
@@ -98,6 +138,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Reopening the app the next morning lands on the new day; returning from the camera keeps the chosen day. */
     fun onResume() {
+        clock.value = LocalTime.now()
         val now = LocalDate.now()
         if (now != lastResumeDate) {
             lastResumeDate = now

@@ -72,7 +72,7 @@ import kotlin.math.roundToInt
 fun FoodScreen(vm: MainViewModel, snackbar: SnackbarHostState, modifier: Modifier) {
     val day by vm.day.collectAsStateWithLifecycle()
     val food by vm.food.collectAsStateWithLifecycle()
-    val frequent by vm.frequentFood.collectAsStateWithLifecycle()
+    val frequent by vm.suggestedFood.collectAsStateWithLifecycle()
     val waterMl by vm.waterMl.collectAsStateWithLifecycle()
     var text by rememberInputText()
     val scope = rememberCoroutineScope()

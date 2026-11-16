@@ -59,13 +59,9 @@ interface LogDao {
     @Query("SELECT * FROM food WHERE day = :day ORDER BY time")
     fun food(day: String): Flow<List<FoodEntry>>
 
-    /** Latest entry of each distinct food, most frequently logged first: the one-tap re-log row. */
-    @Query(
-        """SELECT f.* FROM food f
-           JOIN (SELECT MAX(id) AS mid, COUNT(*) AS n FROM food GROUP BY lower(name)) g ON f.id = g.mid
-           ORDER BY g.n DESC, f.time DESC LIMIT 15"""
-    )
-    fun frequentFood(): Flow<List<FoodEntry>>
+    /** Food from a range of days (ISO dates compare correctly as text), the raw material for suggestions. */
+    @Query("SELECT * FROM food WHERE day BETWEEN :fromDay AND :toDay ORDER BY time")
+    fun foodBetween(fromDay: String, toDay: String): Flow<List<FoodEntry>>
 
     @Insert suspend fun insertFood(entries: List<FoodEntry>): List<Long>
     @Update suspend fun updateFood(entry: FoodEntry)
