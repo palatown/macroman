@@ -11,8 +11,17 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Slider
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -122,16 +131,36 @@ fun FoodConfirmSheet(
         val i = rows.indexOfFirst { it.key == key }
         if (i >= 0) rows[i] = f(rows[i])
     }
+    val rewrites = remember { mutableMapOf<Int, Job>() }
+    var waiting by remember { mutableStateOf(false) }
+    fun ScaledFood.pending() = scale != amountScale && amount.isNotBlank()
     fun rewriteAmount(key: Int) {
         val row = rows.firstOrNull { it.key == key } ?: return
-        if (row.scale == row.amountScale || row.amount.isBlank()) return
+        if (!row.pending()) return
         val target = row.scale
-        scope.launch {
+        rewrites[key] = scope.launch {
             // On failure the field keeps "amount ×factor", which is still accurate and is what gets saved.
             val text = runCatching { onRescaleAmount(row.amount, (target / row.amountScale).toDouble()) }.getOrNull()
                 ?: return@launch
             // Drop the result if the slider moved again meanwhile; that release starts its own rewrite.
             update(key) { if (it.scale == target && it.amount == row.amount) it.copy(amount = text, amountScale = target) else it }
+        }
+    }
+    /**
+     * Save and Duplicate wait for amount rewrites still in flight, so a quick tap after moving the slider
+     * doesn't store the "×factor" placeholder. Bounded, so a slow call can't trap the sheet; past that,
+     * or if a rewrite fails, the placeholder is saved, which is still accurate.
+     */
+    fun afterRewrites(action: (List<FoodDraft>) -> Unit) {
+        if (waiting) return
+        rows.filter { it.pending() && rewrites[it.key]?.isActive != true }.forEach { rewriteAmount(it.key) }
+        val inFlight = rewrites.values.filter { it.isActive }
+        if (inFlight.isEmpty()) return action(rows.map { it.draft() })
+        waiting = true
+        scope.launch {
+            withTimeoutOrNull(10_000) { inFlight.joinAll() }
+            waiting = false
+            action(rows.map { it.draft() })
         }
     }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
@@ -207,11 +236,12 @@ fun FoodConfirmSheet(
             }
             SheetButtons(
                 saveLabel = if (editing != null) "Save" else "Log ${items.size} item${if (items.size == 1) "" else "s"}",
-                saveEnabled = items.isNotEmpty(),
-                onSave = { onSave(items) },
+                saveEnabled = items.isNotEmpty() && !waiting,
+                onSave = { afterRewrites(onSave) },
                 onDelete = editing?.let { id -> { onDelete(id) } },
-                onDuplicate = editing?.let { { onDuplicate(items.single()) } },
+                onDuplicate = editing?.let { { afterRewrites { onDuplicate(it.single()) } } },
                 onDismiss = onDismiss,
+                busy = waiting,
             )
         }
     }
@@ -278,6 +308,7 @@ private fun SheetButtons(
     onDelete: (() -> Unit)?,
     onDuplicate: (() -> Unit)?,
     onDismiss: () -> Unit,
+    busy: Boolean = false,
 ) {
     Row(
         Modifier.fillMaxWidth().padding(vertical = 12.dp),
@@ -292,7 +323,13 @@ private fun SheetButtons(
         }
         Row(Modifier.weight(1f)) {}
         OutlinedButton(onClick = onDismiss) { Text("Cancel") }
-        Button(onClick = onSave, enabled = saveEnabled) { Text(saveLabel, fontWeight = FontWeight.SemiBold) }
+        Button(onClick = onSave, enabled = saveEnabled) {
+            if (busy) {
+                CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+                Spacer(Modifier.width(8.dp))
+            }
+            Text(saveLabel, fontWeight = FontWeight.SemiBold)
+        }
     }
 }
 

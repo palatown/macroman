@@ -182,7 +182,8 @@ class MacroAi(private val settings: Settings) {
             - Use the stated quantity; if none is given, assume a typical single serving and state it in "quantity" (e.g. "1 cup, ~240 g").
             - If a nutrition label is visible, use its exact values scaled to the amount eaten.
             - For branded or restaurant items, use the known published nutrition when you know it.
-            - calories in kcal, macros in grams, rounded to whole numbers. Keep calories consistent with 4/4/9 kcal per g of protein/carbs/fat.
+            - calories in kcal, macros in grams, rounded to whole numbers. Keep calories consistent with 4/4/9 kcal per g of protein/carbs/fat, plus 7 kcal per g of alcohol.
+            - Sanity-check calories against the item's weight: nothing exceeds 9 kcal/g (pure fat), chips and fried snacks are about 5 kcal/g, and bread about 2.5-3 kcal/g. If a label's serving differs from the amount eaten, rescale before reporting.
             - carbs_g is total carbohydrate including fiber, and fiber_g is the dietary fiber within it, so fiber_g never exceeds carbs_g. If a label lists carbohydrates excluding fiber, as EU labels do, add the fiber to carbs_g.
             - Keep "name" short (2-5 words), title case.
             - If the input does not describe food, return an empty list.
