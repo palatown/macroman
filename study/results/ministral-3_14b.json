@@ -1,0 +1,958 @@
+{
+  "model": "ministral-3:14b",
+  "system": "You are the logging engine of a macro tracker used by someone building lean muscle.\nConvert the user's description and/or photo into a list of food items with estimated macros.\n- One item per distinct food. Combine trivial components only when they are normally eaten together (e.g. \"ham sandwich\").\n- Use the stated quantity; if none is given, assume a typical single serving and state it in \"quantity\" (e.g. \"1 cup, ~240 g\").\n- If a nutrition label is visible, use its exact values scaled to the amount eaten.\n- For branded or restaurant items, use the known published nutrition when you know it.\n- calories in kcal, macros in grams, rounded to whole numbers. Keep calories consistent with 4/4/9 kcal per g of protein/carbs/fat, plus 7 kcal per g of alcohol.\n- Sanity-check calories against the item's weight: nothing exceeds 9 kcal/g (pure fat), chips and fried snacks are about 5 kcal/g, and bread about 2.5-3 kcal/g. If a label's serving differs from the amount eaten, rescale before reporting.\n- carbs_g is total carbohydrate including fiber, and fiber_g is the dietary fiber within it, so fiber_g never exceeds carbs_g. If a label lists carbohydrates excluding fiber, as EU labels do, add the fiber to carbs_g.\n- Keep \"name\" short (2-5 words), title case.\n- If the input does not describe food, return an empty list.\n- For photos, estimate portions from the size of plates, bowls, cutlery, packaging and other objects of known size.",
+  "rows": [
+    {
+      "id": "eggs_butter",
+      "kind": "text",
+      "ref": {
+        "kcal": 177,
+        "p": 12.6,
+        "c": 0.7,
+        "f": 13.3,
+        "fiber": 0
+      },
+      "ms": 2292,
+      "tokens": 154,
+      "items": [
+        {
+          "name": "Eggs, Scrambled",
+          "quantity": "2 large (~100 g)",
+          "calories": 140,
+          "protein_g": 12,
+          "carbs_g": 1,
+          "fat_g": 10,
+          "fiber_g": 0
+        },
+        {
+          "name": "Butter",
+          "quantity": "1 tsp (~5 g)",
+          "calories": 36,
+          "protein_g": 0,
+          "carbs_g": 0,
+          "fat_g": 4,
+          "fiber_g": 0
+        }
+      ],
+      "got": {
+        "kcal": 176,
+        "p": 12,
+        "c": 1,
+        "f": 14,
+        "fiber": 0
+      },
+      "pass": true,
+      "kcalErrPct": 0.5649717514124294,
+      "macroErr": 0.6999999999999993
+    },
+    {
+      "id": "chicken_200g",
+      "kind": "text",
+      "ref": {
+        "kcal": 330,
+        "p": 62,
+        "c": 0,
+        "f": 7.2,
+        "fiber": 0
+      },
+      "ms": 1253,
+      "tokens": 80,
+      "items": [
+        {
+          "name": "Cooked Chicken Breast",
+          "quantity": "200 g",
+          "calories": 360,
+          "protein_g": 62,
+          "carbs_g": 0,
+          "fat_g": 6,
+          "fiber_g": 0
+        }
+      ],
+      "got": {
+        "kcal": 360,
+        "p": 62,
+        "c": 0,
+        "f": 6,
+        "fiber": 0
+      },
+      "pass": true,
+      "kcalErrPct": 9.090909090909092,
+      "macroErr": 1.2000000000000002
+    },
+    {
+      "id": "rice_cup",
+      "kind": "text",
+      "ref": {
+        "kcal": 205,
+        "p": 4.3,
+        "c": 44.5,
+        "f": 0.4,
+        "fiber": 0.6
+      },
+      "ms": 1295,
+      "tokens": 84,
+      "items": [
+        {
+          "name": "Cooked White Rice",
+          "quantity": "1 cup, ~240 g",
+          "calories": 205,
+          "protein_g": 4,
+          "carbs_g": 45,
+          "fat_g": 0,
+          "fiber_g": 0
+        }
+      ],
+      "got": {
+        "kcal": 205,
+        "p": 4,
+        "c": 45,
+        "f": 0,
+        "fiber": 0
+      },
+      "pass": true,
+      "kcalErrPct": 0,
+      "macroErr": 0.5
+    },
+    {
+      "id": "banana",
+      "kind": "text",
+      "ref": {
+        "kcal": 105,
+        "p": 1.3,
+        "c": 27,
+        "f": 0.4,
+        "fiber": 3.1
+      },
+      "ms": 1242,
+      "tokens": 81,
+      "items": [
+        {
+          "name": "Banana",
+          "quantity": "1 medium (~118 g)",
+          "calories": 105,
+          "protein_g": 1,
+          "carbs_g": 27,
+          "fat_g": 0,
+          "fiber_g": 3
+        }
+      ],
+      "got": {
+        "kcal": 105,
+        "p": 1,
+        "c": 27,
+        "f": 0,
+        "fiber": 3
+      },
+      "pass": true,
+      "kcalErrPct": 0,
+      "macroErr": 0.4
+    },
+    {
+      "id": "whey",
+      "kind": "text",
+      "ref": {
+        "kcal": 120,
+        "p": 24,
+        "c": 3,
+        "f": 1.5,
+        "fiber": 0
+      },
+      "ms": 2197,
+      "tokens": 146,
+      "items": [
+        {
+          "name": "Whey Protein",
+          "quantity": "1 scoop (~30 g)",
+          "calories": 120,
+          "protein_g": 24,
+          "carbs_g": 3,
+          "fat_g": 1,
+          "fiber_g": 0
+        },
+        {
+          "name": "Water",
+          "quantity": "~240 ml",
+          "calories": 0,
+          "protein_g": 0,
+          "carbs_g": 0,
+          "fat_g": 0,
+          "fiber_g": 0
+        }
+      ],
+      "got": {
+        "kcal": 120,
+        "p": 24,
+        "c": 3,
+        "f": 1,
+        "fiber": 0
+      },
+      "pass": true,
+      "kcalErrPct": 0,
+      "macroErr": 0.5
+    },
+    {
+      "id": "yogurt_honey",
+      "kind": "text",
+      "ref": {
+        "kcal": 164,
+        "p": 17,
+        "c": 23,
+        "f": 0.7,
+        "fiber": 0
+      },
+      "ms": 2286,
+      "tokens": 152,
+      "items": [
+        {
+          "name": "Nonfat Plain Greek Yogurt",
+          "quantity": "170 g",
+          "calories": 120,
+          "protein_g": 23,
+          "carbs_g": 7,
+          "fat_g": 0,
+          "fiber_g": 0
+        },
+        {
+          "name": "Honey",
+          "quantity": "1 tbsp (~21 g)",
+          "calories": 64,
+          "protein_g": 0,
+          "carbs_g": 17,
+          "fat_g": 0,
+          "fiber_g": 0
+        }
+      ],
+      "got": {
+        "kcal": 184,
+        "p": 23,
+        "c": 24,
+        "f": 0,
+        "fiber": 0
+      },
+      "pass": false,
+      "kcalErrPct": 12.195121951219512,
+      "macroErr": 6
+    },
+    {
+      "id": "oats_milk",
+      "kind": "text",
+      "ref": {
+        "kcal": 536,
+        "p": 21.3,
+        "c": 80.1,
+        "f": 14.9,
+        "fiber": 10.1
+      },
+      "ms": 2386,
+      "tokens": 159,
+      "items": [
+        {
+          "name": "Rolled Oats",
+          "quantity": "100 g (dry)",
+          "calories": 389,
+          "protein_g": 13,
+          "carbs_g": 66,
+          "fat_g": 7,
+          "fiber_g": 10
+        },
+        {
+          "name": "Whole Milk",
+          "quantity": "250 ml (~240 g)",
+          "calories": 150,
+          "protein_g": 8,
+          "carbs_g": 12,
+          "fat_g": 8,
+          "fiber_g": 0
+        }
+      ],
+      "got": {
+        "kcal": 539,
+        "p": 21,
+        "c": 78,
+        "f": 15,
+        "fiber": 10
+      },
+      "pass": true,
+      "kcalErrPct": 0.5597014925373134,
+      "macroErr": 2.0999999999999943
+    },
+    {
+      "id": "big_mac",
+      "kind": "text",
+      "ref": {
+        "kcal": 590,
+        "p": 25,
+        "c": 46,
+        "f": 34,
+        "fiber": 3
+      },
+      "ms": 7600,
+      "tokens": 507,
+      "items": [
+        {
+          "name": "Big Mac Bun",
+          "quantity": "1 large (~100 g)",
+          "calories": 250,
+          "protein_g": 8,
+          "carbs_g": 43,
+          "fat_g": 3,
+          "fiber_g": 3
+        },
+        {
+          "name": "Beef Patty (2)",
+          "quantity": "2 patties (~120 g cooked)",
+          "calories": 380,
+          "protein_g": 30,
+          "carbs_g": 0,
+          "fat_g": 26,
+          "fiber_g": 0
+        },
+        {
+          "name": "American Cheese (2 slices)",
+          "quantity": "2 slices (~50 g)",
+          "calories": 220,
+          "protein_g": 14,
+          "carbs_g": 1,
+          "fat_g": 16,
+          "fiber_g": 0
+        },
+        {
+          "name": "Lettuce",
+          "quantity": "small (~10 g)",
+          "calories": 5,
+          "protein_g": 0,
+          "carbs_g": 1,
+          "fat_g": 0,
+          "fiber_g": 0
+        },
+        {
+          "name": "Pickles (2)",
+          "quantity": "2 spears (~20 g)",
+          "calories": 5,
+          "protein_g": 0,
+          "carbs_g": 1,
+          "fat_g": 0,
+          "fiber_g": 0
+        },
+        {
+          "name": "Special Sauce",
+          "quantity": "1 tbsp (~15 g)",
+          "calories": 50,
+          "protein_g": 0,
+          "carbs_g": 4,
+          "fat_g": 3,
+          "fiber_g": 0
+        },
+        {
+          "name": "Onions (thin slices)",
+          "quantity": "small (~10 g)",
+          "calories": 10,
+          "protein_g": 0,
+          "carbs_g": 2,
+          "fat_g": 0,
+          "fiber_g": 0
+        }
+      ],
+      "got": {
+        "kcal": 920,
+        "p": 52,
+        "c": 52,
+        "f": 48,
+        "fiber": 3
+      },
+      "pass": false,
+      "kcalErrPct": 55.932203389830505,
+      "macroErr": 27
+    },
+    {
+      "id": "pb_tbsp",
+      "kind": "text",
+      "ref": {
+        "kcal": 94,
+        "p": 3.6,
+        "c": 3.5,
+        "f": 8.1,
+        "fiber": 0.8
+      },
+      "ms": 1261,
+      "tokens": 81,
+      "items": [
+        {
+          "name": "Peanut Butter",
+          "quantity": "1 tbsp, ~16 g",
+          "calories": 94,
+          "protein_g": 4,
+          "carbs_g": 3,
+          "fat_g": 8,
+          "fiber_g": 1
+        }
+      ],
+      "got": {
+        "kcal": 94,
+        "p": 4,
+        "c": 3,
+        "f": 8,
+        "fiber": 1
+      },
+      "pass": true,
+      "kcalErrPct": 0,
+      "macroErr": 0.5
+    },
+    {
+      "id": "apple",
+      "kind": "text",
+      "ref": {
+        "kcal": 95,
+        "p": 0.5,
+        "c": 25,
+        "f": 0.3,
+        "fiber": 4.4
+      },
+      "ms": 1234,
+      "tokens": 81,
+      "items": [
+        {
+          "name": "Apple, Medium",
+          "quantity": "1 medium (~182 g)",
+          "calories": 95,
+          "protein_g": 0,
+          "carbs_g": 25,
+          "fat_g": 0,
+          "fiber_g": 4
+        }
+      ],
+      "got": {
+        "kcal": 95,
+        "p": 0,
+        "c": 25,
+        "f": 0,
+        "fiber": 4
+      },
+      "pass": true,
+      "kcalErrPct": 0,
+      "macroErr": 0.5
+    },
+    {
+      "id": "salmon_6oz",
+      "kind": "text",
+      "ref": {
+        "kcal": 350,
+        "p": 37.5,
+        "c": 0,
+        "f": 21,
+        "fiber": 0
+      },
+      "ms": 1296,
+      "tokens": 85,
+      "items": [
+        {
+          "name": "Baked Salmon Fillet",
+          "quantity": "6 oz (~170 g)",
+          "calories": 340,
+          "protein_g": 40,
+          "carbs_g": 0,
+          "fat_g": 19,
+          "fiber_g": 0
+        }
+      ],
+      "got": {
+        "kcal": 340,
+        "p": 40,
+        "c": 0,
+        "f": 19,
+        "fiber": 0
+      },
+      "pass": true,
+      "kcalErrPct": 2.857142857142857,
+      "macroErr": 2.5
+    },
+    {
+      "id": "avo_toast",
+      "kind": "text",
+      "ref": {
+        "kcal": 295,
+        "p": 10.5,
+        "c": 36,
+        "f": 13.8,
+        "fiber": 9
+      },
+      "ms": 4305,
+      "tokens": 289,
+      "items": [
+        {
+          "name": "Whole Wheat Toast",
+          "quantity": "2 slices (~60 g)",
+          "calories": 160,
+          "protein_g": 8,
+          "carbs_g": 28,
+          "fat_g": 2,
+          "fiber_g": 6
+        },
+        {
+          "name": "Avocado",
+          "quantity": "½ medium (~70 g)",
+          "calories": 120,
+          "protein_g": 1,
+          "carbs_g": 6,
+          "fat_g": 11,
+          "fiber_g": 5
+        },
+        {
+          "name": "Black Coffee",
+          "quantity": "1 cup (~240 mL)",
+          "calories": 2,
+          "protein_g": 0,
+          "carbs_g": 0,
+          "fat_g": 0,
+          "fiber_g": 0
+        },
+        {
+          "name": "Whole Milk",
+          "quantity": "1 tbsp (~15 mL)",
+          "calories": 10,
+          "protein_g": 1,
+          "carbs_g": 1,
+          "fat_g": 0,
+          "fiber_g": 0
+        }
+      ],
+      "got": {
+        "kcal": 292,
+        "p": 10,
+        "c": 35,
+        "f": 13,
+        "fiber": 11
+      },
+      "pass": true,
+      "kcalErrPct": 1.0169491525423728,
+      "macroErr": 1
+    },
+    {
+      "id": "black_beans",
+      "kind": "text",
+      "ref": {
+        "kcal": 227,
+        "p": 15.2,
+        "c": 40.8,
+        "f": 0.9,
+        "fiber": 15
+      },
+      "ms": 1325,
+      "tokens": 87,
+      "items": [
+        {
+          "name": "Cooked Black Beans",
+          "quantity": "1 cup, ~240 g",
+          "calories": 227,
+          "protein_g": 15,
+          "carbs_g": 40,
+          "fat_g": 1,
+          "fiber_g": 15
+        }
+      ],
+      "got": {
+        "kcal": 227,
+        "p": 15,
+        "c": 40,
+        "f": 1,
+        "fiber": 15
+      },
+      "pass": true,
+      "kcalErrPct": 0,
+      "macroErr": 0.7999999999999972
+    },
+    {
+      "id": "chipotle_bowl",
+      "kind": "text",
+      "ref": {
+        "kcal": 675,
+        "p": 51,
+        "c": 72,
+        "f": 20.5,
+        "fiber": 10
+      },
+      "ms": 6824,
+      "tokens": 454,
+      "items": [
+        {
+          "name": "Chipotle Chicken",
+          "quantity": "150 g (cooked)",
+          "calories": 250,
+          "protein_g": 30,
+          "carbs_g": 0,
+          "fat_g": 12,
+          "fiber_g": 0
+        },
+        {
+          "name": "White Rice",
+          "quantity": "1 cup, ~150 g (cooked)",
+          "calories": 205,
+          "protein_g": 4,
+          "carbs_g": 45,
+          "fat_g": 0,
+          "fiber_g": 0
+        },
+        {
+          "name": "Black Beans",
+          "quantity": "½ cup, ~90 g (cooked)",
+          "calories": 110,
+          "protein_g": 7,
+          "carbs_g": 20,
+          "fat_g": 0,
+          "fiber_g": 6
+        },
+        {
+          "name": "Fajita Veggies",
+          "quantity": "1 cup, ~100 g (mixed peppers/onions)",
+          "calories": 30,
+          "protein_g": 1,
+          "carbs_g": 7,
+          "fat_g": 0,
+          "fiber_g": 2
+        },
+        {
+          "name": "Mild Salsa",
+          "quantity": "¼ cup, ~60 g",
+          "calories": 15,
+          "protein_g": 0,
+          "carbs_g": 3,
+          "fat_g": 0,
+          "fiber_g": 1
+        },
+        {
+          "name": "Shredded Cheese",
+          "quantity": "¼ cup, ~30 g",
+          "calories": 110,
+          "protein_g": 7,
+          "carbs_g": 1,
+          "fat_g": 9,
+          "fiber_g": 0
+        }
+      ],
+      "got": {
+        "kcal": 720,
+        "p": 49,
+        "c": 76,
+        "f": 21,
+        "fiber": 9
+      },
+      "pass": true,
+      "kcalErrPct": 6.666666666666667,
+      "macroErr": 4
+    },
+    {
+      "id": "dictated_breakfast",
+      "kind": "text",
+      "ref": {
+        "kcal": 254,
+        "p": 15.2,
+        "c": 14.7,
+        "f": 14.5,
+        "fiber": 0.8
+      },
+      "ms": 3556,
+      "tokens": 220,
+      "items": [
+        {
+          "name": "Eggs",
+          "quantity": "2 large, ~100 g",
+          "calories": 140,
+          "protein_g": 12,
+          "carbs_g": 1,
+          "fat_g": 10,
+          "fiber_g": 0
+        },
+        {
+          "name": "White Bread",
+          "quantity": "1 slice, ~30 g",
+          "calories": 80,
+          "protein_g": 3,
+          "carbs_g": 15,
+          "fat_g": 0,
+          "fiber_g": 1
+        },
+        {
+          "name": "Butter",
+          "quantity": "1 tsp, ~5 g",
+          "calories": 35,
+          "protein_g": 0,
+          "carbs_g": 0,
+          "fat_g": 4,
+          "fiber_g": 0
+        }
+      ],
+      "got": {
+        "kcal": 255,
+        "p": 15,
+        "c": 16,
+        "f": 14,
+        "fiber": 1
+      },
+      "pass": true,
+      "kcalErrPct": 0.39370078740157477,
+      "macroErr": 1.3000000000000007
+    },
+    {
+      "id": "not_food",
+      "kind": "text",
+      "ref": {
+        "kcal": 0,
+        "p": 0,
+        "c": 0,
+        "f": 0,
+        "fiber": 0
+      },
+      "expectEmpty": true,
+      "ms": 163,
+      "tokens": 7,
+      "items": [],
+      "got": {
+        "kcal": 0,
+        "p": 0,
+        "c": 0,
+        "f": 0,
+        "fiber": 0
+      },
+      "pass": true,
+      "kcalErrPct": 0
+    },
+    {
+      "id": "label_bar",
+      "kind": "image",
+      "ref": {
+        "kcal": 230,
+        "p": 20,
+        "c": 24,
+        "f": 8,
+        "fiber": 10
+      },
+      "ms": 8609,
+      "tokens": 84,
+      "items": [
+        {
+          "name": "Protein Bar",
+          "quantity": "1 bar, 60 g",
+          "calories": 230,
+          "protein_g": 20,
+          "carbs_g": 24,
+          "fat_g": 8,
+          "fiber_g": 10
+        }
+      ],
+      "got": {
+        "kcal": 230,
+        "p": 20,
+        "c": 24,
+        "f": 8,
+        "fiber": 10
+      },
+      "pass": true,
+      "kcalErrPct": 0,
+      "macroErr": 0
+    },
+    {
+      "id": "label_cereal_1.5cup",
+      "kind": "image",
+      "ref": {
+        "kcal": 337.5,
+        "p": 6.75,
+        "c": 74.25,
+        "f": 4.5,
+        "fiber": 9
+      },
+      "ms": 1606,
+      "tokens": 86,
+      "items": [
+        {
+          "name": "Oatmeal (Dry)",
+          "quantity": "1.5 cups (~60 g)",
+          "calories": 225,
+          "protein_g": 5,
+          "carbs_g": 50,
+          "fat_g": 3,
+          "fiber_g": 6
+        }
+      ],
+      "got": {
+        "kcal": 225,
+        "p": 5,
+        "c": 50,
+        "f": 3,
+        "fiber": 6
+      },
+      "pass": false,
+      "kcalErrPct": 33.33333333333333,
+      "macroErr": 24.25
+    },
+    {
+      "id": "label_pb_2serv",
+      "kind": "image",
+      "ref": {
+        "kcal": 380,
+        "p": 14,
+        "c": 14,
+        "f": 32,
+        "fiber": 6
+      },
+      "ms": 1638,
+      "tokens": 85,
+      "items": [
+        {
+          "name": "Peanut Butter",
+          "quantity": "2 tbsp, ~32 g",
+          "calories": 380,
+          "protein_g": 14,
+          "carbs_g": 14,
+          "fat_g": 32,
+          "fiber_g": 6
+        }
+      ],
+      "got": {
+        "kcal": 380,
+        "p": 14,
+        "c": 14,
+        "f": 32,
+        "fiber": 6
+      },
+      "pass": true,
+      "kcalErrPct": 0,
+      "macroErr": 0
+    },
+    {
+      "id": "label_pizza_whole",
+      "kind": "image",
+      "ref": {
+        "kcal": 930,
+        "p": 42,
+        "c": 102,
+        "f": 39,
+        "fiber": 6
+      },
+      "ms": 1623,
+      "tokens": 86,
+      "items": [
+        {
+          "name": "Cheese Pizza",
+          "quantity": "1 pizza, ~384 g",
+          "calories": 930,
+          "protein_g": 42,
+          "carbs_g": 102,
+          "fat_g": 39,
+          "fiber_g": 6
+        }
+      ],
+      "got": {
+        "kcal": 930,
+        "p": 42,
+        "c": 102,
+        "f": 39,
+        "fiber": 6
+      },
+      "pass": true,
+      "kcalErrPct": 0,
+      "macroErr": 0
+    },
+    {
+      "id": "label_yogurt_eu_250g",
+      "kind": "image",
+      "ref": {
+        "kcal": 237.5,
+        "p": 25,
+        "c": 10,
+        "f": 7.5,
+        "fiber": 0
+      },
+      "ms": 1525,
+      "tokens": 80,
+      "items": [
+        {
+          "name": "Unknown Food",
+          "quantity": "250 g",
+          "calories": 238,
+          "protein_g": 25,
+          "carbs_g": 100,
+          "fat_g": 7,
+          "fiber_g": 0
+        }
+      ],
+      "got": {
+        "kcal": 238,
+        "p": 25,
+        "c": 100,
+        "f": 7,
+        "fiber": 0
+      },
+      "pass": false,
+      "kcalErrPct": 0.21052631578947367,
+      "macroErr": 90
+    },
+    {
+      "id": "label_muesli_eu_60g",
+      "kind": "image",
+      "ref": {
+        "kcal": 223.2,
+        "p": 6,
+        "c": 39.9,
+        "f": 4.26,
+        "fiber": 5.1
+      },
+      "ms": 1519,
+      "tokens": 80,
+      "items": [
+        {
+          "name": "Oatmeal",
+          "quantity": "60 g",
+          "calories": 223,
+          "protein_g": 6,
+          "carbs_g": 348,
+          "fat_g": 4,
+          "fiber_g": 51
+        }
+      ],
+      "got": {
+        "kcal": 223,
+        "p": 6,
+        "c": 348,
+        "f": 4,
+        "fiber": 51
+      },
+      "pass": false,
+      "kcalErrPct": 0.08960573476702001,
+      "macroErr": 308.1
+    },
+    {
+      "id": "label_chips_photo_half",
+      "kind": "image",
+      "ref": {
+        "kcal": 640,
+        "p": 8,
+        "c": 60,
+        "f": 40,
+        "fiber": 4
+      },
+      "ms": 1622,
+      "tokens": 87,
+      "items": [
+        {
+          "name": "Potato Chips",
+          "quantity": "1 oz (~28 g), half of 15 chips",
+          "calories": 80,
+          "protein_g": 1,
+          "carbs_g": 8,
+          "fat_g": 5,
+          "fiber_g": 0
+        }
+      ],
+      "got": {
+        "kcal": 80,
+        "p": 1,
+        "c": 8,
+        "f": 5,
+        "fiber": 0
+      },
+      "pass": false,
+      "kcalErrPct": 87.5,
+      "macroErr": 52
+    }
+  ]
+}

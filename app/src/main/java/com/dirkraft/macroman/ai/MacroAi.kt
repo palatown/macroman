@@ -1,28 +1,10 @@
 package com.dirkraft.macroman.ai
 
-import com.anthropic.client.AnthropicClient
-import com.anthropic.client.okhttp.AnthropicOkHttpClient
-import com.anthropic.core.JsonValue
-import com.anthropic.errors.AnthropicIoException
-import com.anthropic.errors.AnthropicServiceException
-import com.anthropic.errors.NotFoundException
-import com.anthropic.errors.PermissionDeniedException
-import com.anthropic.errors.UnauthorizedException
-import com.anthropic.models.messages.Base64ImageSource
-import com.anthropic.models.messages.ContentBlockParam
-import com.anthropic.models.messages.ImageBlockParam
-import com.anthropic.models.messages.JsonOutputFormat
-import com.anthropic.models.messages.MessageCreateParams
-import com.anthropic.models.messages.OutputConfig
-import com.anthropic.models.messages.StopReason
-import com.anthropic.models.messages.TextBlockParam
 import com.dirkraft.macroman.data.Settings
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
-import java.util.Base64
 
 @Serializable
 data class FoodItem(
@@ -51,128 +33,70 @@ data class WorkoutItem(
 @Serializable private data class HandResult(val measurements: String)
 @Serializable private data class AmountResult(val amount: String)
 
-/** Turns free text and/or a photo into structured macros (or workout sets) with one Claude call. */
+/** Turns free text and/or a photo into structured macros (or workout sets) with one model call. */
 class MacroAi(private val settings: Settings) {
     private val json = Json { ignoreUnknownKeys = true }
-    private var client: AnthropicClient? = null
-    private var clientKey: String? = null
+    private var backend: LlmBackend? = null
+    private var backendConfig: LlmConfig? = null
 
-    private fun client(): AnthropicClient {
-        val key = settings.apiKey.trim()
-        if (key.isEmpty()) throw IllegalStateException("Add your Anthropic API key in Settings first.")
-        if (client == null || key != clientKey) {
-            client = AnthropicOkHttpClient.builder().apiKey(key).build()
-            clientKey = key
+    /** Rebuilt whenever the provider, address, key or models change in Settings. */
+    private fun backend(): LlmBackend {
+        val config = settings.llmConfig()
+        if (backend == null || config != backendConfig) {
+            backend = if (config.provider == Provider.ANTHROPIC) AnthropicBackend(config) else OpenAiCompatBackend(config)
+            backendConfig = config
         }
-        return client!!
+        return backend!!
     }
 
-    /**
-     * Checks the key and model with a Models API lookup, which costs no tokens.
-     * Returns the model's display name on success, or throws with a message fit to show the user.
-     */
-    suspend fun check(): String = withContext(Dispatchers.IO) {
-        val model = settings.model.ifBlank { Settings.DEFAULT_MODEL }
-        try {
-            client().models().retrieve(model).displayName()
-        } catch (e: UnauthorizedException) {
-            throw IllegalStateException("Key not recognised")
-        } catch (e: PermissionDeniedException) {
-            throw IllegalStateException("Key doesn't have access")
-        } catch (e: NotFoundException) {
-            throw IllegalStateException("Key works, but model \"$model\" wasn't found")
-        } catch (e: AnthropicServiceException) {
-            throw IllegalStateException("Anthropic returned an error (${e.statusCode()})")
-        } catch (e: AnthropicIoException) {
-            throw IllegalStateException("Couldn't reach Anthropic. Check your connection.")
-        }
-    }
+    suspend fun check(): String = backend().check()
+
+    suspend fun models(): List<String> = backend().models()
 
     suspend fun parseFood(text: String, jpeg: ByteArray?): List<FoodItem> {
-        val blocks = buildList {
-            if (jpeg != null) add(image(jpeg))
-            add(text(text.ifBlank { "Log what is in this photo." }))
-        }
         val hand = settings.handReference.trim()
         val system = if (hand.isEmpty()) FOOD_SYSTEM else "$FOOD_SYSTEM\n\n$HAND_SCALE\n$hand"
         // Judging portion size from a photo is where extra thinking pays off; text stays fast.
-        val effort = if (jpeg != null) OutputConfig.Effort.HIGH else OutputConfig.Effort.LOW
-        return json.decodeFromString<FoodResult>(ask(system, FOOD_SCHEMA, blocks, effort)).items
+        val effort = if (jpeg != null) Effort.HIGH else Effort.LOW
+        val req = LlmRequest(system, text.ifBlank { "Log what is in this photo." }, jpeg, FOOD_SCHEMA, effort)
+        return ask<FoodResult>(req).items
     }
 
-    /** Rewrites an amount like "1 cup, ~240 g" for [factor] times as much. A tiny job, so it goes to Haiku. */
+    /** Rewrites an amount like "1 cup, ~240 g" for [factor] times as much. A tiny job, so it goes to the quick model. */
     suspend fun rescaleAmount(amount: String, factor: Double): String {
-        val prompt = "Amount: $amount\nFactor: ${"%.2f".format(java.util.Locale.ROOT, factor).trimEnd('0').trimEnd('.')}"
-        val result = json.decodeFromString<AmountResult>(
-            ask(AMOUNT_SYSTEM, AMOUNT_SCHEMA, listOf(text(prompt)), OutputConfig.Effort.LOW, AMOUNT_MODEL)
-        )
+        val prompt = "Amount: $amount\nFactor:${"%.2f".format(java.util.Locale.ROOT, factor).trimEnd('0').trimEnd('.')}"
+        val result = ask<AmountResult>(LlmRequest(AMOUNT_SYSTEM, prompt, null, AMOUNT_SCHEMA, Effort.LOW, quick = true))
         return result.amount.trim().ifEmpty { throw IllegalStateException("Empty amount") }
     }
 
     suspend fun parseWorkout(text: String): List<WorkoutItem> =
-        json.decodeFromString<WorkoutResult>(
-            ask(WORKOUT_SYSTEM, WORKOUT_SCHEMA, listOf(text(text)), OutputConfig.Effort.LOW)
-        ).items
+        ask<WorkoutResult>(LlmRequest(WORKOUT_SYSTEM, text, null, WORKOUT_SCHEMA, Effort.LOW)).items
 
     /** Reads hand dimensions off a photo of the user's hand next to a tape measure or ruler. */
     suspend fun measureHand(jpeg: ByteArray): String {
-        val blocks = listOf(image(jpeg), text("Measure my hand against the tape measure in this photo."))
-        val result = json.decodeFromString<HandResult>(ask(HAND_SYSTEM, HAND_SCHEMA, blocks, OutputConfig.Effort.HIGH))
+        val req = LlmRequest(HAND_SYSTEM, "Measure my hand against the tape measure in this photo.", jpeg, HAND_SCHEMA, Effort.HIGH)
+        val result = ask<HandResult>(req)
         if (result.measurements.isBlank()) throw IllegalStateException("Couldn't measure a hand against a ruler in that photo.")
         return result.measurements.trim()
     }
 
-    private fun text(s: String) = ContentBlockParam.ofText(TextBlockParam.builder().text(s).build())
-
-    private fun image(jpeg: ByteArray) = ContentBlockParam.ofImage(
-        ImageBlockParam.builder()
-            .source(
-                Base64ImageSource.builder()
-                    .data(Base64.getEncoder().encodeToString(jpeg))
-                    .mediaType(Base64ImageSource.MediaType.IMAGE_JPEG)
-                    .build()
-            )
-            .build()
-    )
-
-    private suspend fun ask(
-        system: String,
-        schema: Map<String, Any>,
-        blocks: List<ContentBlockParam>,
-        effort: OutputConfig.Effort,
-        model: String = settings.model.ifBlank { Settings.DEFAULT_MODEL },
-    ): String =
-        withContext(Dispatchers.IO) {
-            val schemaParam = JsonOutputFormat.Schema.builder().apply {
-                schema.forEach { (k, v) -> putAdditionalProperty(k, JsonValue.from(v)) }
-            }.build()
-            val params = MessageCreateParams.builder()
-                .model(model)
-                .maxTokens(16000L)
-                .system(system)
-                .outputConfig(
-                    OutputConfig.builder()
-                        .effort(effort)
-                        .format(JsonOutputFormat.builder().schema(schemaParam).build())
-                        .build()
-                )
-                .addUserMessageOfBlockParams(blocks)
-                .apply {
-                    // Server-side fallback: a safety-classifier refusal is retried on a suitable model instead of failing.
-                    // Haiku has no fallback, so only the main model asks for it.
-                    if (model != AMOUNT_MODEL) {
-                        putAdditionalHeader("anthropic-beta", "server-side-fallback-2026-07-01")
-                        putAdditionalBodyProperty("fallbacks", JsonValue.from("default"))
-                    }
-                }
-                .build()
-
-            val message = client().messages().create(params)
-            if (message.stopReason().orElse(null) == StopReason.REFUSAL) {
-                throw IllegalStateException("Claude declined that request. Try rewording it.")
+    /**
+     * Anthropic enforces the schema, but other providers may only approximate it, so an answer that doesn't
+     * parse gets one more try before giving up.
+     */
+    private suspend inline fun <reified T> ask(req: LlmRequest): T {
+        var last: SerializationException? = null
+        repeat(2) {
+            try {
+                return json.decodeFromString<T>(backend().complete(req))
+            } catch (e: SerializationException) {
+                last = e
+            } catch (e: IllegalArgumentException) {
+                last = SerializationException(e.message)
             }
-            message.content().mapNotNull { it.text().orElse(null)?.text() }.joinToString("")
         }
+        throw IllegalStateException("The model's answer wasn't in the expected format. ${last?.message?.take(80).orEmpty()}")
+    }
 
     private companion object {
         val FOOD_SYSTEM = """
@@ -205,8 +129,6 @@ class MacroAi(private val settings: Settings) {
             - Only include dimensions the ruler actually lets you measure; skip anything you would have to guess.
             - If there is no hand or no readable ruler, return an empty string.
         """.trimIndent()
-
-        const val AMOUNT_MODEL = "claude-haiku-5-5"
 
         val AMOUNT_SYSTEM = """
             You rewrite the amount of a food log entry after the user scaled the portion.

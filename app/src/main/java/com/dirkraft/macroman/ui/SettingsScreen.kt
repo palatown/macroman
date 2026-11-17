@@ -45,11 +45,11 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.filled.Straighten
 import com.dirkraft.macroman.MainViewModel
+import com.dirkraft.macroman.ai.Provider
 import com.dirkraft.macroman.data.Settings
 import com.dirkraft.macroman.data.Targets
 
-private const val CONSOLE_KEYS_URL = "https://console.anthropic.com/settings/keys"
-private const val CONSOLE_BILLING_URL = "https://platform.claude.com/settings/billing"
+private const val ANTHROPIC_BILLING_URL = "https://platform.claude.com/settings/billing"
 
 private sealed interface KeyStatus {
     data object Empty : KeyStatus
@@ -61,14 +61,19 @@ private sealed interface KeyStatus {
 @Composable
 fun SettingsScreen(vm: MainViewModel, modifier: Modifier) {
     val settings = vm.settings
+    val provider = settings.provider
+    val apiKey = settings.apiKey(provider)
+    val model = settings.model(provider)
+    val baseUrl = settings.baseUrl(provider)
     var status by remember { mutableStateOf<KeyStatus>(KeyStatus.Empty) }
+    var models by remember(provider) { mutableStateOf(emptyList<String>()) }
     val pickHandPhoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) vm.measureHand(uri)
     }
 
-    // Re-check whenever the key or model changes, after typing/pasting settles.
-    LaunchedEffect(settings.apiKey, settings.model) {
-        if (settings.apiKey.isBlank()) {
+    // Re-check whenever the connection settings change, after typing/pasting settles.
+    LaunchedEffect(provider, apiKey, model, baseUrl) {
+        if (apiKey.isBlank() && !provider.keyOptional || provider != Provider.ANTHROPIC && baseUrl.isBlank()) {
             status = KeyStatus.Empty
             return@LaunchedEffect
         }
@@ -81,6 +86,7 @@ fun SettingsScreen(vm: MainViewModel, modifier: Modifier) {
         } catch (e: Exception) {
             KeyStatus.Failed(e.message ?: "Check failed")
         }
+        models = try { vm.listModels() } catch (e: CancellationException) { throw e } catch (e: Exception) { emptyList() }
     }
 
     Column(
@@ -89,16 +95,42 @@ fun SettingsScreen(vm: MainViewModel, modifier: Modifier) {
     ) {
         Text("Settings", style = MaterialTheme.typography.headlineSmall)
 
+        ProviderPicker(provider) { settings.provider = it }
+        if (!provider.tested) {
+            Text(
+                "Only Anthropic has been tested. This one is written against the provider's docs and should " +
+                    "work, but hasn't been verified. Photos need a model that accepts images.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.tertiary,
+            )
+        }
+        if (provider != Provider.ANTHROPIC) {
+            OutlinedTextField(
+                value = baseUrl,
+                onValueChange = { settings.setBaseUrl(provider, it.trim()) },
+                label = { Text("Base URL") },
+                placeholder = {
+                    Text(if (provider == Provider.LOCAL) "http://192.168.1.20:11434/v1" else "https://…/v1")
+                },
+                supportingText = {
+                    if (provider == Provider.LOCAL) Text("Your computer's address. Ollama uses port 11434, LM Studio 1234.")
+                },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+
         val good = Color(0xFF2E7D32)
         OutlinedTextField(
-            value = settings.apiKey,
-            onValueChange = { settings.apiKey = it.trim() },
-            label = { Text("Anthropic API key") },
+            value = apiKey,
+            onValueChange = { settings.setApiKey(provider, it.trim()) },
+            label = { Text(if (provider.keyOptional) "API key (if the server wants one)" else "${provider.label} API key") },
             supportingText = {
                 when (val s = status) {
                     KeyStatus.Empty -> Text("Stored only on this phone.")
-                    KeyStatus.Checking -> Text("Checking key…")
-                    is KeyStatus.Ok -> Text("Key works · ${s.model}", color = good)
+                    KeyStatus.Checking -> Text("Checking…")
+                    is KeyStatus.Ok -> Text("Works · ${s.model}", color = good)
                     is KeyStatus.Failed -> Text(s.message, color = MaterialTheme.colorScheme.error)
                 }
             },
@@ -106,8 +138,8 @@ fun SettingsScreen(vm: MainViewModel, modifier: Modifier) {
                 when (status) {
                     KeyStatus.Empty -> {}
                     KeyStatus.Checking -> CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-                    is KeyStatus.Ok -> Icon(Icons.Default.CheckCircle, "Key works", tint = good)
-                    is KeyStatus.Failed -> Icon(Icons.Default.Error, "Key problem", tint = MaterialTheme.colorScheme.error)
+                    is KeyStatus.Ok -> Icon(Icons.Default.CheckCircle, "Works", tint = good)
+                    is KeyStatus.Failed -> Icon(Icons.Default.Error, "Problem", tint = MaterialTheme.colorScheme.error)
                 }
             },
             isError = status is KeyStatus.Failed,
@@ -116,28 +148,32 @@ fun SettingsScreen(vm: MainViewModel, modifier: Modifier) {
             modifier = Modifier.fillMaxWidth(),
         )
         val uriHandler = LocalUriHandler.current
-        OutlinedButton(onClick = { uriHandler.openUri(CONSOLE_KEYS_URL) }) {
-            Icon(Icons.AutoMirrored.Filled.OpenInNew, null, Modifier.size(18.dp))
-            Text("Get an API key", Modifier.padding(start = 8.dp))
+        provider.keysUrl?.let { url ->
+            OutlinedButton(onClick = { uriHandler.openUri(url) }) {
+                Icon(Icons.AutoMirrored.Filled.OpenInNew, null, Modifier.size(18.dp))
+                Text("Get an API key", Modifier.padding(start = 8.dp))
+            }
         }
-        // A normal API key can't read its credit balance, so this opens the page that shows it.
-        OutlinedButton(onClick = { uriHandler.openUri(CONSOLE_BILLING_URL) }) {
-            Icon(Icons.AutoMirrored.Filled.OpenInNew, null, Modifier.size(18.dp))
-            Text("Check credits and usage", Modifier.padding(start = 8.dp))
+        if (provider == Provider.ANTHROPIC) {
+            // A normal API key can't read its credit balance, so this opens the page that shows it.
+            OutlinedButton(onClick = { uriHandler.openUri(ANTHROPIC_BILLING_URL) }) {
+                Icon(Icons.AutoMirrored.Filled.OpenInNew, null, Modifier.size(18.dp))
+                Text("Check credits and usage", Modifier.padding(start = 8.dp))
+            }
         }
-        OutlinedTextField(
-            value = settings.model,
-            onValueChange = { settings.model = it.trim() },
-            label = { Text("Model") },
-            supportingText = { Text("Default: ${Settings.DEFAULT_MODEL}") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        ModelField(
+            "Model", model, models,
+            hint = if (provider == Provider.ANTHROPIC) "Default: ${Settings.DEFAULT_MODEL}" else "Used for logging food and workouts",
+        ) { settings.setModel(provider, it) }
+        ModelField(
+            "Quick model", settings.quickModel(provider), models,
+            hint = "For small rewrites like the portion slider. Blank uses the main model.",
+        ) { settings.setQuickModel(provider, it) }
 
         Text("Hand for scale", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
         Text(
             "Photograph your hand flat next to a tape measure, then pick that photo here. " +
-                "After that, keep your hand in food photos so Claude can judge portion sizes.",
+                "After that, keep your hand in food photos so the model can judge portion sizes.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

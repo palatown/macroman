@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Plain http is allowed so a model server on the home network (Ollama, LM Studio) can be used.
+  OpenAiCompatBackend refuses http to anything that isn't a local or private address, so keys
+  never go over plain http to the internet.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

@@ -1,6 +1,6 @@
 {
   "model": "gemma4:26b-a4b+nothink",
-  "system": "You are the logging engine of a macro tracker used by someone building lean muscle.\nConvert the user's description and/or photo into a list of food items with estimated macros.\n- One item per distinct food. Combine trivial components only when they are normally eaten together (e.g. \"ham sandwich\").\n- Use the stated quantity; if none is given, assume a typical single serving and state it in \"quantity\" (e.g. \"1 cup, ~240 g\").\n- If a nutrition label is visible, use its exact values scaled to the amount eaten.\n- For branded or restaurant items, use the known published nutrition when you know it.\n- calories in kcal, macros in grams, rounded to whole numbers. Keep calories consistent with 4/4/9 kcal per g of protein/carbs/fat.\n- carbs_g is total carbohydrate including fiber, and fiber_g is the dietary fiber within it, so fiber_g never exceeds carbs_g. If a label lists carbohydrates excluding fiber, as EU labels do, add the fiber to carbs_g.\n- Keep \"name\" short (2-5 words), title case.\n- If the input does not describe food, return an empty list.\n- For photos, estimate portions from the size of plates, bowls, cutlery, packaging and other objects of known size.",
+  "system": "You are the logging engine of a macro tracker used by someone building lean muscle.\nConvert the user's description and/or photo into a list of food items with estimated macros.\n- One item per distinct food. Combine trivial components only when they are normally eaten together (e.g. \"ham sandwich\").\n- Use the stated quantity; if none is given, assume a typical single serving and state it in \"quantity\" (e.g. \"1 cup, ~240 g\").\n- If a nutrition label is visible, use its exact values scaled to the amount eaten.\n- For branded or restaurant items, use the known published nutrition when you know it.\n- calories in kcal, macros in grams, rounded to whole numbers. Keep calories consistent with 4/4/9 kcal per g of protein/carbs/fat, plus 7 kcal per g of alcohol.\n- Sanity-check calories against the item's weight: nothing exceeds 9 kcal/g (pure fat), chips and fried snacks are about 5 kcal/g, and bread about 2.5-3 kcal/g. If a label's serving differs from the amount eaten, rescale before reporting.\n- carbs_g is total carbohydrate including fiber, and fiber_g is the dietary fiber within it, so fiber_g never exceeds carbs_g. If a label lists carbohydrates excluding fiber, as EU labels do, add the fiber to carbs_g.\n- Keep \"name\" short (2-5 words), title case.\n- If the input does not describe food, return an empty list.\n- For photos, estimate portions from the size of plates, bowls, cutlery, packaging and other objects of known size.",
   "rows": [
     {
       "id": "eggs_butter",
@@ -12,12 +12,12 @@
         "f": 13.3,
         "fiber": 0
       },
-      "ms": 33992,
-      "tokens": 167,
+      "ms": 1694,
+      "tokens": 168,
       "items": [
         {
           "name": "Scrambled Eggs",
-          "quantity": "2 large",
+          "quantity": "2 large eggs",
           "calories": 140,
           "protein_g": 12,
           "carbs_g": 1,
@@ -27,7 +27,7 @@
         {
           "name": "Butter",
           "quantity": "1 tsp, ~5 g",
-          "calories": 36,
+          "calories": 35,
           "protein_g": 0,
           "carbs_g": 0,
           "fat_g": 4,
@@ -35,14 +35,14 @@
         }
       ],
       "got": {
-        "kcal": 176,
+        "kcal": 175,
         "p": 12,
         "c": 1,
         "f": 14,
         "fiber": 0
       },
       "pass": true,
-      "kcalErrPct": 0.5649717514124294,
+      "kcalErrPct": 1.1299435028248588,
       "macroErr": 0.6999999999999993
     },
     {
@@ -55,7 +55,7 @@
         "f": 7.2,
         "fiber": 0
       },
-      "ms": 990,
+      "ms": 1078,
       "tokens": 92,
       "items": [
         {
@@ -89,7 +89,7 @@
         "f": 0.4,
         "fiber": 0.6
       },
-      "ms": 1123,
+      "ms": 1194,
       "tokens": 96,
       "items": [
         {
@@ -123,7 +123,7 @@
         "f": 0.4,
         "fiber": 3.1
       },
-      "ms": 1016,
+      "ms": 1108,
       "tokens": 94,
       "items": [
         {
@@ -157,11 +157,11 @@
         "f": 1.5,
         "fiber": 0
       },
-      "ms": 1649,
+      "ms": 1793,
       "tokens": 172,
       "items": [
         {
-          "name": "Whey Protein Scoop",
+          "name": "Whey Protein Powder",
           "quantity": "1 scoop, ~30 g",
           "calories": 120,
           "protein_g": 24,
@@ -200,7 +200,7 @@
         "f": 0.7,
         "fiber": 0
       },
-      "ms": 1668,
+      "ms": 1828,
       "tokens": 171,
       "items": [
         {
@@ -243,7 +243,7 @@
         "f": 14.9,
         "fiber": 10.1
       },
-      "ms": 1657,
+      "ms": 1771,
       "tokens": 170,
       "items": [
         {
@@ -286,12 +286,12 @@
         "f": 34,
         "fiber": 3
       },
-      "ms": 1059,
-      "tokens": 90,
+      "ms": 939,
+      "tokens": 62,
       "items": [
         {
           "name": "Big Mac",
-          "quantity": "1 sandwich",
+          "quantity": "1 burger",
           "calories": 590,
           "protein_g": 25,
           "carbs_g": 46,
@@ -320,7 +320,7 @@
         "f": 8.1,
         "fiber": 0.8
       },
-      "ms": 995,
+      "ms": 1102,
       "tokens": 92,
       "items": [
         {
@@ -354,12 +354,12 @@
         "f": 0.3,
         "fiber": 4.4
       },
-      "ms": 1020,
-      "tokens": 93,
+      "ms": 957,
+      "tokens": 64,
       "items": [
         {
-          "name": "Medium Apple",
-          "quantity": "1 unit, ~180 g",
+          "name": "Apple",
+          "quantity": "1 medium, ~180 g",
           "calories": 95,
           "protein_g": 0,
           "carbs_g": 25,
@@ -388,7 +388,7 @@
         "f": 21,
         "fiber": 0
       },
-      "ms": 1087,
+      "ms": 1129,
       "tokens": 97,
       "items": [
         {
@@ -422,14 +422,14 @@
         "f": 13.8,
         "fiber": 9
       },
-      "ms": 2292,
-      "tokens": 251,
+      "ms": 2524,
+      "tokens": 256,
       "items": [
         {
           "name": "Whole Wheat Toast",
-          "quantity": "2 slices",
+          "quantity": "2 slices, ~70 g",
           "calories": 160,
-          "protein_g": 8,
+          "protein_g": 7,
           "carbs_g": 26,
           "fat_g": 2,
           "fiber_g": 4
@@ -455,7 +455,7 @@
       ],
       "got": {
         "kcal": 300,
-        "p": 10,
+        "p": 9,
         "c": 34,
         "f": 14,
         "fiber": 9
@@ -474,7 +474,7 @@
         "f": 0.9,
         "fiber": 15
       },
-      "ms": 1066,
+      "ms": 1152,
       "tokens": 98,
       "items": [
         {
@@ -508,29 +508,74 @@
         "f": 20.5,
         "fiber": 10
       },
-      "ms": 1039,
-      "tokens": 94,
+      "ms": 4599,
+      "tokens": 497,
       "items": [
         {
           "name": "Chipotle Chicken Bowl",
           "quantity": "1 bowl",
           "calories": 850,
           "protein_g": 45,
-          "carbs_g": 95,
-          "fat_g": 35,
+          "carbs_g": 85,
+          "fat_g": 38,
           "fiber_g": 12
+        },
+        {
+          "name": "White Rice",
+          "quantity": "1 cup, ~158 g",
+          "calories": 210,
+          "protein_g": 4,
+          "carbs_g": 45,
+          "fat_g": 0,
+          "fiber_g": 1
+        },
+        {
+          "name": "Black Beans",
+          "quantity": "1/2 cup, ~130 g",
+          "calories": 130,
+          "protein_g": 7,
+          "carbs_g": 22,
+          "fat_g": 1,
+          "fiber_g": 8
+        },
+        {
+          "name": "Fajita Veggies",
+          "quantity": "1 serving, ~75 g",
+          "calories": 20,
+          "protein_g": 1,
+          "carbs_g": 4,
+          "fat_g": 0,
+          "fiber_g": 1
+        },
+        {
+          "name": "Mild Salsa",
+          "quantity": "2 tbsp, ~30 g",
+          "calories": 15,
+          "protein_g": 0,
+          "carbs_g": 3,
+          "fat_g": 0,
+          "fiber_g": 1
+        },
+        {
+          "name": "Cheese",
+          "quantity": "1/4 cup, ~28 g",
+          "calories": 110,
+          "protein_g": 7,
+          "carbs_g": 1,
+          "fat_g": 9,
+          "fiber_g": 0
         }
       ],
       "got": {
-        "kcal": 850,
-        "p": 45,
-        "c": 95,
-        "f": 35,
-        "fiber": 12
+        "kcal": 1335,
+        "p": 64,
+        "c": 160,
+        "f": 48,
+        "fiber": 23
       },
       "pass": false,
-      "kcalErrPct": 25.925925925925924,
-      "macroErr": 23
+      "kcalErrPct": 97.77777777777777,
+      "macroErr": 88
     },
     {
       "id": "dictated_breakfast",
@@ -542,8 +587,8 @@
         "f": 14.5,
         "fiber": 0.8
       },
-      "ms": 1619,
-      "tokens": 165,
+      "ms": 1939,
+      "tokens": 170,
       "items": [
         {
           "name": "Large Eggs",
@@ -556,7 +601,7 @@
         },
         {
           "name": "Toast With Butter",
-          "quantity": "1 slice",
+          "quantity": "1 slice, ~40g",
           "calories": 150,
           "protein_g": 3,
           "carbs_g": 15,
@@ -586,7 +631,7 @@
         "fiber": 0
       },
       "expectEmpty": true,
-      "ms": 375,
+      "ms": 413,
       "tokens": 10,
       "items": [],
       "got": {
@@ -609,7 +654,7 @@
         "f": 8,
         "fiber": 10
       },
-      "ms": 3147,
+      "ms": 1776,
       "tokens": 94,
       "items": [
         {
@@ -643,12 +688,12 @@
         "f": 4.5,
         "fiber": 9
       },
-      "ms": 2793,
-      "tokens": 62,
+      "ms": 1516,
+      "tokens": 97,
       "items": [
         {
-          "name": "Food Item",
-          "quantity": "1.5 cups",
+          "name": "Cereal or Grain Product",
+          "quantity": "1.5 cups (~90 g)",
           "calories": 338,
           "protein_g": 7,
           "carbs_g": 74,
@@ -677,7 +722,7 @@
         "f": 32,
         "fiber": 6
       },
-      "ms": 2763,
+      "ms": 1340,
       "tokens": 69,
       "items": [
         {
@@ -711,8 +756,8 @@
         "f": 39,
         "fiber": 6
       },
-      "ms": 2757,
-      "tokens": 68,
+      "ms": 1429,
+      "tokens": 96,
       "items": [
         {
           "name": "Whole Pizza",
@@ -745,11 +790,11 @@
         "f": 7.5,
         "fiber": 0
       },
-      "ms": 1146,
-      "tokens": 63,
+      "ms": 1255,
+      "tokens": 65,
       "items": [
         {
-          "name": "Food Item",
+          "name": "Unspecified Food Item",
           "quantity": "250 g",
           "calories": 238,
           "protein_g": 25,
@@ -779,11 +824,11 @@
         "f": 4.26,
         "fiber": 5.1
       },
-      "ms": 1182,
+      "ms": 1245,
       "tokens": 64,
       "items": [
         {
-          "name": "Cereal/Granola",
+          "name": "Cereal or Granola",
           "quantity": "60 g",
           "calories": 223,
           "protein_g": 6,
@@ -813,29 +858,29 @@
         "f": 40,
         "fiber": 4
       },
-      "ms": 1235,
-      "tokens": 67,
+      "ms": 1307,
+      "tokens": 66,
       "items": [
         {
-          "name": "Potato Chips",
+          "name": "Chips",
           "quantity": "4 oz, ~112 g",
-          "calories": 320,
-          "protein_g": 4,
-          "carbs_g": 30,
-          "fat_g": 20,
-          "fiber_g": 2
+          "calories": 640,
+          "protein_g": 8,
+          "carbs_g": 60,
+          "fat_g": 40,
+          "fiber_g": 4
         }
       ],
       "got": {
-        "kcal": 320,
-        "p": 4,
-        "c": 30,
-        "f": 20,
-        "fiber": 2
+        "kcal": 640,
+        "p": 8,
+        "c": 60,
+        "f": 40,
+        "fiber": 4
       },
-      "pass": false,
-      "kcalErrPct": 50,
-      "macroErr": 30
+      "pass": true,
+      "kcalErrPct": 0,
+      "macroErr": 0
     }
   ]
 }

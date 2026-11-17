@@ -31,6 +31,8 @@ async function ask(model, think, c) {
     messages: [{ role: 'system', content: SYSTEM }, msg],
     options: { temperature: 0, num_ctx: 8192 },
   };
+  // An answer is a few hundred tokens; without thinking, anything past this is a model stuck repeating itself.
+  if (think !== true) body.options.num_predict = 1500;
   if (think !== undefined) body.think = think;
   const t0 = performance.now();
   const r = await fetch(`${OLLAMA}/api/chat`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
@@ -65,6 +67,8 @@ for (const spec of process.argv.slice(2)) {
   const all = [...(only === 'image' ? [] : cases.text.map((c) => ({ ...c, kind: 'text' }))), ...(only === 'text' ? [] : cases.image.map((c) => ({ ...c, kind: 'image' })))];
   const rows = [];
   console.log(`\n=== ${spec} ===`);
+  // Load the model first so the first case's time doesn't include loading it.
+  await ask(model, think, { input: 'one apple' }).catch(() => {});
   for (const c of all) {
     let row = { id: c.id, kind: c.kind, ref: c.ref, expectEmpty: c.expectEmpty };
     try {

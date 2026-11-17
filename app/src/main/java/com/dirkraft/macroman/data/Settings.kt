@@ -2,6 +2,9 @@ package com.dirkraft.macroman.data
 
 import android.content.Context
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import com.dirkraft.macroman.ai.LlmConfig
+import com.dirkraft.macroman.ai.Provider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
@@ -20,8 +23,54 @@ data class Targets(val calories: Int, val protein: Int, val carbs: Int, val fat:
 class Settings(context: Context) {
     private val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
 
-    var apiKey by pref("api_key", "")
-    var model by pref("model", DEFAULT_MODEL)
+    // Anthropic's key and model keep their original keys, from before there was a provider choice.
+    private var anthropicKey by pref("api_key", "")
+    private var anthropicModel by pref("model", DEFAULT_MODEL)
+
+    var provider: Provider
+        get() = Provider.byId(read("provider", Provider.ANTHROPIC.id))
+        set(v) = write("provider", v.id)
+
+    fun apiKey(p: Provider = provider) = if (p == Provider.ANTHROPIC) anthropicKey else read("api_key_${p.id}", "")
+    fun setApiKey(p: Provider, v: String) = if (p == Provider.ANTHROPIC) anthropicKey = v else write("api_key_${p.id}", v)
+
+    /** Other providers start with no model: their lists change too often to guess, so one is picked in Settings. */
+    fun model(p: Provider = provider) = if (p == Provider.ANTHROPIC) anthropicModel else read("model_${p.id}", "")
+    fun setModel(p: Provider, v: String) = if (p == Provider.ANTHROPIC) anthropicModel = v else write("model_${p.id}", v)
+
+    /** For small rewrite jobs; blank means use the main model. */
+    fun quickModel(p: Provider = provider) =
+        read("quick_model_${p.id}", if (p == Provider.ANTHROPIC) DEFAULT_QUICK_MODEL else "")
+    fun setQuickModel(p: Provider, v: String) = write("quick_model_${p.id}", v)
+
+    fun baseUrl(p: Provider = provider) = read("base_url_${p.id}", p.defaultBaseUrl)
+    fun setBaseUrl(p: Provider, v: String) = write("base_url_${p.id}", v)
+
+    /** Whether the chosen provider has what it needs to make a call. */
+    fun configured(): Boolean {
+        val p = provider
+        return (p.keyOptional || apiKey(p).isNotBlank()) && (p == Provider.ANTHROPIC || baseUrl(p).isNotBlank())
+    }
+
+    fun llmConfig(): LlmConfig {
+        val p = provider
+        return LlmConfig(
+            p, baseUrl(p).trim(), apiKey(p).trim(),
+            model(p).trim().ifBlank { if (p == Provider.ANTHROPIC) DEFAULT_MODEL else "" }, quickModel(p).trim(),
+        )
+    }
+
+    // Settings with keys made at runtime. Reads go straight to the prefs (whose writes are visible at once);
+    // the counter is what tells Compose to read again.
+    private val version = mutableIntStateOf(0)
+    private fun read(key: String, default: String): String {
+        version.intValue
+        return prefs.getString(key, default) ?: default
+    }
+    private fun write(key: String, value: String) {
+        prefs.edit().putString(key, value).apply()
+        version.intValue++
+    }
 
     /** Hand dimensions, one per line, sent with food photos so a hand in frame gives scale. */
     var handReference by pref("hand_reference", "")
@@ -51,6 +100,7 @@ class Settings(context: Context) {
     companion object {
         const val DEFAULT_PHOTO_LIMIT_MB = 1024
         const val DEFAULT_MODEL = "claude-opus-5-5"
+        const val DEFAULT_QUICK_MODEL = "claude-haiku-5-5"
         // Lean-gain starting points for roughly an 80 kg lifter; meant to be tuned in Settings.
         val DEFAULT_TARGETS = Targets(calories = 2400, protein = 180, carbs = 220, fat = 80)
     }

@@ -61,7 +61,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun App(vm: MainViewModel) {
     // Without a key nothing can be analysed, so first launch goes straight to Settings.
-    var tab by rememberSaveable { mutableStateOf(if (vm.settings.apiKey.isBlank()) Tab.Settings else Tab.Food) }
+    var tab by rememberSaveable { mutableStateOf(if (!vm.settings.configured()) Tab.Settings else Tab.Food) }
     val snackbar = remember { SnackbarHostState() }
 
     LaunchedEffect(vm.error) {
