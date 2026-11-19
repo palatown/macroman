@@ -32,7 +32,8 @@ fun BackupSection(backup: Backup, settings: Settings) {
     val target = settings.backupUri
     val last = settings.backupLast
     val fileName by produceState<String?>(null, target) { value = backup.fileName() }
-    var pending by remember { mutableStateOf<BackupFile?>(null) }
+    // The backup picked for restoring, and the file it came from.
+    var pending by remember { mutableStateOf<Pair<BackupFile, android.net.Uri>?>(null) }
     var message by remember { mutableStateOf<String?>(null) }
 
     // A new file, made through the system save dialog, where Drive shows up as a location.
@@ -42,7 +43,7 @@ fun BackupSection(backup: Backup, settings: Settings) {
     val pickRestore = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) scope.launch {
             try {
-                pending = backup.read(uri)
+                pending = backup.read(uri) to uri
             } catch (e: Exception) {
                 message = e.message
             }
@@ -79,7 +80,7 @@ fun BackupSection(backup: Backup, settings: Settings) {
     }
     message?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
 
-    pending?.let { file ->
+    pending?.let { (file, source) ->
         val date = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(file.exportedAt))
         AlertDialog(
             onDismissRequest = { pending = null },
@@ -88,7 +89,7 @@ fun BackupSection(backup: Backup, settings: Settings) {
                 Text(
                     "Saved $date, with ${file.food.size} food entries, ${file.workouts.size} exercises and " +
                         "${file.water.size} days of water.\n\nThis replaces everything logged on this phone, and " +
-                        "your settings. API keys stay as they are."
+                        "your settings. API keys stay as they are. Backups then keep going to this file."
                 )
             },
             confirmButton = {
@@ -97,7 +98,10 @@ fun BackupSection(backup: Backup, settings: Settings) {
                     scope.launch {
                         message = try {
                             backup.restore(file)
-                            null
+                            // Carry on backing up to the file that was restored from. Some storage apps only allow
+                            // reading a file opened this way; then the user picks a backup file as usual.
+                            if (runCatching { backup.choose(source) }.isSuccess) null
+                            else "Restored. Choose a backup file to keep backing up."
                         } catch (e: Exception) {
                             "Restore failed; nothing was changed."
                         }
