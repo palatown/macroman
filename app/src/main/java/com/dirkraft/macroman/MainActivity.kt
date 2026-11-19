@@ -52,6 +52,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /** Leaving the app is a natural moment to save, and also picks up settings changes. */
+    override fun onStop() {
+        super.onStop()
+        (application as MacromanApp).backup.saveSoon()
+    }
+
     override fun onResume() {
         super.onResume()
         vm.onResume()

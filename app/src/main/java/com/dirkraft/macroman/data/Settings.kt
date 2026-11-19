@@ -23,6 +23,12 @@ data class Targets(val calories: Int, val protein: Int, val carbs: Int, val fat:
 class Settings(context: Context) {
     private val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
 
+    /**
+     * Re-reads the settings held in Compose state, after a restore rewrote the prefs underneath them.
+     * Declared first: the delegated settings below register here as they are created.
+     */
+    private val reloaders = mutableListOf<() -> Unit>()
+
     // Anthropic's key and model keep their original keys, from before there was a provider choice.
     private var anthropicKey by pref("api_key", "")
     private var anthropicModel by pref("model", DEFAULT_MODEL)
@@ -90,6 +96,7 @@ class Settings(context: Context) {
 
     private fun pref(key: String, default: String) = object {
         private val state = mutableStateOf(prefs.getString(key, default) ?: default)
+            .also { s -> reloaders += { s.value = prefs.getString(key, default) ?: default } }
         operator fun getValue(thisRef: Any?, p: Any?): String = state.value
         operator fun setValue(thisRef: Any?, p: Any?, value: String) {
             state.value = value
@@ -97,7 +104,34 @@ class Settings(context: Context) {
         }
     }
 
+    /** Where the backup file lives (a document URI), or blank for no backup. Not itself backed up. */
+    var backupUri: String
+        get() = read(BACKUP_URI, "")
+        set(v) = write(BACKUP_URI, v)
+
+    /** When the backup file was last written (epoch ms), 0 if not yet. */
+    var backupLast: Long
+        get() = read("backup_last", "0").toLongOrNull() ?: 0
+        set(v) = write("backup_last", v.toString())
+
+    /** Every setting except API keys and the backup location, for the backup file. */
+    fun exportable(): Map<String, String> =
+        prefs.all.filter { (k, v) -> v is String && !isPrivate(k) }.mapValues { it.value as String }
+
+    /** Replaces the backed-up settings, leaving API keys and the backup location as they are on this phone. */
+    fun import(values: Map<String, String>) {
+        val edit = prefs.edit()
+        prefs.all.keys.filterNot(::isPrivate).forEach { edit.remove(it) }
+        values.filterKeys { !isPrivate(it) }.forEach { (k, v) -> edit.putString(k, v) }
+        edit.commit()
+        reloaders.forEach { it() }
+        version.intValue++
+    }
+
+    private fun isPrivate(key: String) = key.startsWith("api_key") || key.startsWith("backup_")
+
     companion object {
+        private const val BACKUP_URI = "backup_uri" // "backup_" settings stay out of the backup file
         const val DEFAULT_PHOTO_LIMIT_MB = 1024
         const val DEFAULT_MODEL = "claude-opus-5-5"
         const val DEFAULT_QUICK_MODEL = "claude-haiku-5-5"

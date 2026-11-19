@@ -16,8 +16,10 @@ import androidx.room.Update
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.Serializable
 
 /** One logged food item. [day] is an ISO date (yyyy-MM-dd) so a day's log is a simple equality lookup. */
+@Serializable
 @Entity(tableName = "food")
 data class FoodEntry(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -35,6 +37,7 @@ data class FoodEntry(
     val photo: String? = null,
 )
 
+@Serializable
 @Entity(tableName = "workout")
 data class WorkoutEntry(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -50,6 +53,7 @@ data class WorkoutEntry(
 )
 
 /** Water is one running total per day rather than a list of log entries. */
+@Serializable
 @Entity(tableName = "water")
 data class WaterDay(
     @PrimaryKey val day: String,
@@ -100,6 +104,26 @@ interface LogDao {
 
     @Query("UPDATE water SET ml = MAX(0, ml + :deltaMl) WHERE day = :day")
     suspend fun changeWaterMl(day: String, deltaMl: Int)
+
+    @Query("SELECT * FROM food ORDER BY id") suspend fun allFood(): List<FoodEntry>
+    @Query("SELECT * FROM workout ORDER BY id") suspend fun allWorkouts(): List<WorkoutEntry>
+    @Query("SELECT * FROM water ORDER BY day") suspend fun allWater(): List<WaterDay>
+
+    @Query("DELETE FROM food") suspend fun clearFood()
+    @Query("DELETE FROM workout") suspend fun clearWorkouts()
+    @Query("DELETE FROM water") suspend fun clearWater()
+    @Insert suspend fun insertWater(days: List<WaterDay>)
+
+    /** Swaps the whole log for a restored one, all or nothing. */
+    @Transaction
+    suspend fun replaceAll(food: List<FoodEntry>, workouts: List<WorkoutEntry>, water: List<WaterDay>) {
+        clearFood()
+        clearWorkouts()
+        clearWater()
+        insertFood(food)
+        insertWorkouts(workouts)
+        insertWater(water)
+    }
 
     @Transaction
     suspend fun addWater(day: String, deltaMl: Int) {

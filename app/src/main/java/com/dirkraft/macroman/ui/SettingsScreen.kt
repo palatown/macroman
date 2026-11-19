@@ -199,6 +199,8 @@ fun SettingsScreen(vm: MainViewModel, modifier: Modifier) {
         TargetsEditor("Daily targets", settings.targets) { settings.targets = it }
 
         PhotoStorage(vm)
+
+        BackupSection(vm.backup, settings)
     }
 }
 

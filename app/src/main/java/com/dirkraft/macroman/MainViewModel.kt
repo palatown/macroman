@@ -105,6 +105,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val dao = macroman.db.dao()
     private val ai = macroman.ai
     val photos = macroman.photos
+    val backup = macroman.backup
     val settings = macroman.settings
 
     val day = MutableStateFlow(LocalDate.now())

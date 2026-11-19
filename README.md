@@ -24,9 +24,13 @@ sped up; the real wait was about 40 seconds. With Claude a text entry takes a fe
 - **Daily targets** for calories and macros, with progress bars.
 - **Hand for scale:** photograph your hand next to a tape measure once, and later food photos with your hand in
   them get sized against it.
+- **Backup:** pick a file once, for example in Google Drive through the normal Android save dialog, and the
+  app keeps it up to date with your log and settings. API keys and photos aren't included. You can restore
+  from it on a new phone.
 
-Everything is stored on the phone. The only thing that leaves it is the request to the model provider: your text,
-plus a downscaled copy of the photo with its metadata (location, time, device) stripped.
+Everything is stored on the phone. What leaves it is the request to the model provider (your text, plus a
+downscaled copy of the photo with its metadata stripped) and, if you turn it on, the backup file. Android's own
+cloud backup is turned off for the app, so your API key doesn't end up there.
 
 ## Model providers
 
