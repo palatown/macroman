@@ -89,3 +89,12 @@ MIT, see [LICENSE](LICENSE). Dependency licenses are checked with Cash App's
 [Licensee](https://github.com/cashapp/licensee) plugin: `./gradlew licensee` (also part of `./gradlew check`)
 fails if any dependency, including transitive ones, has a license other than Apache-2.0 or MIT. As of November
 2026 that's 123 artifacts, 118 Apache-2.0 and 5 MIT.
+
+Before the repo went public I also ran two one-off scans (November 2026):
+
+- [ScanCode Toolkit](https://github.com/aboutcode-org/scancode-toolkit) 32.5.0 over all 70 committed files. The
+  only license text or copyright notices it found are this repo's own `LICENSE` and the standard Gradle wrapper
+  (`gradlew`, `gradlew.bat`, Apache-2.0). The nutrition labels in `study/` and the demo are made up and rendered
+  from HTML here.
+- [gitleaks](https://github.com/gitleaks/gitleaks) 8.30.1 over the full git history and the working tree: no keys
+  or tokens.
