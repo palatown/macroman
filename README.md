@@ -98,3 +98,6 @@ Before the repo went public I also ran two one-off scans (November 2026):
   from HTML here.
 - [gitleaks](https://github.com/gitleaks/gitleaks) 8.30.1 over the full git history and the working tree: no keys
   or tokens.
+- Every resolved dependency against [OSV](https://osv.dev). The Anthropic SDK brought in Jackson and Apache
+  HttpComponents versions with published advisories; `app/build.gradle.kts` pins patched releases, and after
+  that OSV lists nothing.

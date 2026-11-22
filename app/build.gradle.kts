@@ -64,6 +64,15 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
     implementation("com.anthropic:anthropic-java:2.34.0")
+
+    // The SDK pulls in Jackson 2.18.2 and HttpComponents 5.2/5.3, which have published advisories (DoS and
+    // validator bypasses). Pin patched releases; Jackson stays on the 2.18 line the SDK was built against.
+    implementation(platform("com.fasterxml.jackson:jackson-bom:2.18.12"))
+    constraints {
+        implementation("org.apache.httpcomponents.client5:httpclient5:5.6.5")
+        implementation("org.apache.httpcomponents.core5:httpcore5:5.4.4")
+        implementation("org.apache.httpcomponents.core5:httpcore5-h2:5.4.4")
+    }
 }
 
 // Fails the build if any dependency, direct or transitive, has a license outside this list.
