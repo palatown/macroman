@@ -4,6 +4,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.kotlin.plugin.serialization")
     id("com.google.devtools.ksp")
+    id("app.cash.licensee")
 }
 
 android {
@@ -63,4 +64,11 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
     implementation("com.anthropic:anthropic-java:2.34.0")
+}
+
+// Fails the build if any dependency, direct or transitive, has a license outside this list.
+// Run `./gradlew licensee` for the report (app/build/reports/licensee/).
+licensee {
+    allow("Apache-2.0")
+    allow("MIT")
 }

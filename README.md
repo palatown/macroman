@@ -32,6 +32,9 @@ Everything is stored on the phone. What leaves it is the request to the model pr
 downscaled copy of the photo with its metadata stripped) and, if you turn it on, the backup file. Android's own
 cloud backup is turned off for the app, so your API key doesn't end up there.
 
+The numbers are a language model's estimates, and they can be wrong, sometimes by a lot. This is a logging tool,
+not medical or dietary advice; if you're managing a health condition, go by your doctor or dietitian.
+
 ## Model providers
 
 You bring your own API key. Pick a provider in Settings:
@@ -79,3 +82,10 @@ docs/demo/            scripts that recorded the demo
 ```
 
 Kotlin, Jetpack Compose, Room, and the Anthropic Java SDK. No analytics or tracking.
+
+## License
+
+MIT, see [LICENSE](LICENSE). Dependency licenses are checked with Cash App's
+[Licensee](https://github.com/cashapp/licensee) plugin: `./gradlew licensee` (also part of `./gradlew check`)
+fails if any dependency, including transitive ones, has a license other than Apache-2.0 or MIT. As of November
+2026 that's 123 artifacts, 118 Apache-2.0 and 5 MIT.
