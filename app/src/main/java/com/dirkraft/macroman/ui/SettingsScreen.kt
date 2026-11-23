@@ -36,6 +36,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -246,6 +247,15 @@ private fun TargetsEditor(title: String, t: Targets, onChange: (Targets) -> Unit
         IntField("Protein g", t.protein, Modifier.weight(1f)) { onChange(t.copy(protein = it)) }
         IntField("Carbs g", t.carbs, Modifier.weight(1f)) { onChange(t.copy(carbs = it)) }
         IntField("Fat g", t.fat, Modifier.weight(1f)) { onChange(t.copy(fat = it)) }
+    }
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+        IntField("Fiber g", t.fiber, Modifier.weight(1.2f)) { onChange(t.copy(fiber = it)) }
+        Text(
+            "Counted within carbs. Shown as a tick on the carbs bar.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(3f),
+        )
     }
 }
 

@@ -23,6 +23,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -222,10 +224,10 @@ private fun MacroSummary(food: List<FoodEntry>, t: Targets, waterMl: Int, onWate
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            MacroBar("Protein", p, t.protein, "g", MacroColors.protein)
-            MacroBar("Carbs", c, t.carbs, "g", MacroColors.carbs, fiber = food.sumOf { it.fiber })
-            MacroBar("Fat", f, t.fat, "g", MacroColors.fat)
             MacroBar("Calories", kcal, t.calories, "", MaterialTheme.colorScheme.primary)
+            MacroBar("Protein", p, t.protein, "g", MacroColors.protein)
+            MacroBar("Carbs", c, t.carbs, "g", MacroColors.carbs, fiber = food.sumOf { it.fiber }, fiberTarget = t.fiber)
+            MacroBar("Fat", f, t.fat, "g", MacroColors.fat)
         }
         WaterLogger(waterMl, onWater)
     }
@@ -266,13 +268,22 @@ object MacroColors {
 }
 
 @Composable
-private fun MacroBar(label: String, value: Double, target: Int, unit: String, color: Color, fiber: Double? = null) {
+private fun MacroBar(
+    label: String, value: Double, target: Int, unit: String, color: Color,
+    fiber: Double? = null, fiberTarget: Int = 0,
+) {
     val left = target - value.roundToInt()
     val share = { amount: Double -> if (target > 0) (amount / target).toFloat().coerceIn(0f, 1f) else 0f }
+    val tickColor = MaterialTheme.colorScheme.onSurface
+    val tickAt = if (fiber != null && fiberTarget > 0 && target > 0) share(fiberTarget.toDouble()) else null
     Column {
         Row(verticalAlignment = Alignment.Bottom) {
             Text(
-                if (fiber != null) "$label · ${fiber.roundToInt()} fiber" else label,
+                when {
+                    fiber == null -> label
+                    fiberTarget > 0 -> "$label · ${fiber.roundToInt()}/$fiberTarget fiber"
+                    else -> "$label · ${fiber.roundToInt()} fiber"
+                },
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.weight(1f),
                 maxLines = 1,
@@ -289,7 +300,17 @@ private fun MacroBar(label: String, value: Double, target: Int, unit: String, co
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        Box {
+        // The tick marks the fiber target, measured along the carbs bar. It runs a little past the bar's edges
+        // so it still shows once the bar fills past it.
+        Box(
+            Modifier.drawWithContent {
+                drawContent()
+                if (tickAt != null) {
+                    val x = (size.width * tickAt).coerceIn(1.dp.toPx(), size.width - 1.dp.toPx())
+                    drawLine(tickColor, Offset(x, 0f), Offset(x, size.height + 2.dp.toPx()), strokeWidth = 2.dp.toPx())
+                }
+            }
+        ) {
             LinearProgressIndicator(
                 progress = { share(value) },
                 modifier = Modifier.fillMaxWidth().height(8.dp).padding(top = 2.dp),

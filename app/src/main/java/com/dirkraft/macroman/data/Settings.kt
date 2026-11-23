@@ -8,14 +8,16 @@ import com.dirkraft.macroman.ai.Provider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
-data class Targets(val calories: Int, val protein: Int, val carbs: Int, val fat: Int) {
-    fun encode() = "$calories,$protein,$carbs,$fat"
+/** Fiber is a target within the carbs, not on top of them. */
+data class Targets(val calories: Int, val protein: Int, val carbs: Int, val fat: Int, val fiber: Int) {
+    fun encode() = "$calories,$protein,$carbs,$fat,$fiber"
 
     companion object {
+        /** Also reads the four-number form from before there was a fiber target (and old backups). */
         fun decode(s: String?, default: Targets): Targets =
             s?.split(',')?.mapNotNull { it.trim().toIntOrNull() }
-                ?.takeIf { it.size == 4 }
-                ?.let { Targets(it[0], it[1], it[2], it[3]) } ?: default
+                ?.takeIf { it.size == 4 || it.size == 5 }
+                ?.let { Targets(it[0], it[1], it[2], it[3], it.getOrElse(4) { default.fiber }) } ?: default
     }
 }
 
@@ -136,6 +138,6 @@ class Settings(context: Context) {
         const val DEFAULT_MODEL = "claude-opus-5-5"
         const val DEFAULT_QUICK_MODEL = "claude-haiku-5-5"
         // Lean-gain starting points for roughly an 80 kg lifter; meant to be tuned in Settings.
-        val DEFAULT_TARGETS = Targets(calories = 2400, protein = 180, carbs = 220, fat = 80)
+        val DEFAULT_TARGETS = Targets(calories = 2400, protein = 180, carbs = 220, fat = 80, fiber = 30)
     }
 }
