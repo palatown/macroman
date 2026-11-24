@@ -1,13 +1,13 @@
-# macroman
+# <img src="docs/icon.svg" width="36" align="top" alt=""> macroman
 
 A food and workout log for Android where you type, say, or photograph what you ate and an LLM fills in the
 macros. I wanted to get from "I just ate something" to "it's logged" in as few taps as possible, so the app
 opens straight onto the log with the keyboard up.
 
-<p align="center"><img src="docs/demo.png" width="300" alt="Typing a meal, adjusting a portion with the slider, logging it, and opening a saved label photo"></p>
+<p align="center"><img src="docs/demo.png" width="300" alt="Typing a meal, bumping the pizza to 1.5 portions with the slider, logging it, re-logging almonds from the history search, and opening a saved label photo"></p>
 
-<sub>The demo runs on an emulator against Gemma 4 on a desktop through Ollama. The model's thinking time is
-sped up; the real wait was about 40 seconds. With Claude a text entry takes a few seconds.</sub>
+<sub>The demo runs on an emulator against Gemma 4 on a desktop through Ollama. The model's wait is sped up; the
+real one was about 25 seconds. With Claude a text entry takes a few seconds.</sub>
 
 ## What it does
 
@@ -17,11 +17,15 @@ sped up; the real wait was about 40 seconds. With Claude a text entry takes a fe
 - **Portion slider:** each item has a 0.5x–2x slider. The numbers follow it straight away, and a small model
   rewrites the amount text to match ("150 g" becomes "225 g").
 - **Suggestions:** a row of one-tap re-logs based on what you ate around this time of day over the last week.
+- **History search:** the magnifier at the start of that row searches everything you've logged, by name and
+  amount. It's forgiving about typos, abbreviations and word order ("almnds", "grk yogrt"); tap a result to log
+  it again.
 - **Photos:** the picture each entry came from is kept on the phone, shown as a thumbnail, and opens
   full-screen on tap. There's a storage cap in Settings (1 GB by default); the oldest pictures are dropped first.
 - **Workouts:** the same idea for training: "bench 3x8 185, then 20 min incline walk".
 - **Water:** a running daily total with ±0.5 L buttons.
-- **Daily targets** for calories and macros, with progress bars.
+- **Daily targets** for calories, protein, carbs and fat, with progress bars. Fiber is shown inside the carbs bar,
+  with a tick at your fiber target.
 - **Hand for scale:** photograph your hand next to a tape measure once, and later food photos with your hand in
   them get sized against it.
 - **Backup:** pick a file once, for example in Google Drive through the normal Android save dialog, and the
@@ -74,7 +78,7 @@ Then open Settings in the app, pick a provider, and paste a key.
 app/src/main/java/com/dirkraft/macroman/
   ai/MacroAi.kt       prompts and JSON schemas
   ai/Backends.kt      Anthropic and OpenAI-compatible clients
-  data/               Room database, settings, photo storage
+  data/               Room database, settings, photo storage, backup, history search
   ui/                 Compose screens
   MainViewModel.kt
 study/                scoring local models against the food prompt

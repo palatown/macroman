@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="18 18 72 72" width="72" height="72">
+  <!-- The launcher icon (app/src/main/res/drawable/ic_launcher_fg.xml) on its background, cropped to a circle. -->
+  <circle cx="54" cy="54" r="36" fill="#141C24"/>
+  <rect x="29" y="32" width="8" height="44" rx="4" fill="#E57373"/>
+  <rect x="39" y="32" width="8" height="32" rx="4" fill="#64B5F6"/>
+  <rect x="49" y="32" width="8" height="22" rx="4" fill="#FFB74D"/>
+  <rect x="59" y="32" width="8" height="32" rx="4" fill="#64B5F6"/>
+  <rect x="69" y="32" width="8" height="44" rx="4" fill="#E57373"/>
+</svg>

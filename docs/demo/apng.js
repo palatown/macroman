@@ -67,8 +67,12 @@ actl.writeUInt32BE(0, 4); // loop forever
 parts.push(chunk("acTL", actl));
 const w = kept[0].ihdr.readUInt32BE(0), h = kept[0].ihdr.readUInt32BE(4);
 let seq = 0;
+// Nothing on screen holds longer than this; the driver's pauses to find things on screen would otherwise drag.
+const MAX_HOLD_MS = 2200;
+let total = 0;
 kept.forEach((f, i) => {
-  const ms = Math.max(20, Math.round((kept[i + 1]?.at ?? end) - f.at));
+  const ms = Math.min(MAX_HOLD_MS, Math.max(20, Math.round((kept[i + 1]?.at ?? end) - f.at)));
+  total += ms;
   const fctl = Buffer.alloc(26);
   fctl.writeUInt32BE(seq++, 0);
   fctl.writeUInt32BE(w, 4);
@@ -90,4 +94,4 @@ kept.forEach((f, i) => {
 parts.push(chunk("IEND", Buffer.alloc(0)));
 const out = Buffer.concat(parts);
 fs.writeFileSync(outFile, out);
-console.log(`${kept.length} frames, ${(end / 1000).toFixed(1)} s, ${(out.length / 1e6).toFixed(2)} MB`);
+console.log(`${kept.length} frames, ${(total / 1000).toFixed(1)} s, ${(out.length / 1e6).toFixed(2)} MB`);
