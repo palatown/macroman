@@ -14,6 +14,7 @@ import androidx.lifecycle.viewModelScope
 import com.dirkraft.macroman.ai.FoodItem
 import com.dirkraft.macroman.ai.WorkoutItem
 import com.dirkraft.macroman.data.FoodEntry
+import com.dirkraft.macroman.data.FoodSearch
 import com.dirkraft.macroman.data.WorkoutEntry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -286,6 +287,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         val copy = entry.copy(id = 0, day = day.value.toString(), time = stamp(), photo = null)
         return copy.copy(id = dao.insertFood(listOf(copy)).first())
     }
+
+    /** Every food ever logged, one per name, for the history search. Read when the search opens. */
+    suspend fun foodHistory(): List<FoodSearch.Food> = withContext(Dispatchers.Default) { FoodSearch.distinct(dao.allFood()) }
 
     suspend fun relogWorkout(entry: WorkoutEntry): WorkoutEntry {
         val copy = entry.copy(id = 0, day = day.value.toString(), time = stamp())

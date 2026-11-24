@@ -1,5 +1,13 @@
 package com.dirkraft.macroman.ui
 
+import com.dirkraft.macroman.data.FoodSearch
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.runtime.produceState
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material.icons.filled.Search
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import android.util.Size
@@ -9,6 +17,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -40,6 +49,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
@@ -78,6 +88,8 @@ fun FoodScreen(vm: MainViewModel, snackbar: SnackbarHostState, modifier: Modifie
     val waterMl by vm.waterMl.collectAsStateWithLifecycle()
     var text by rememberInputText()
     var viewing by remember { mutableStateOf<String?>(null) }
+    var searching by rememberSaveable { mutableStateOf(false) }
+    BackHandler(searching) { searching = false }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -118,22 +130,32 @@ fun FoodScreen(vm: MainViewModel, snackbar: SnackbarHostState, modifier: Modifie
     Column(modifier) {
         DayBar(day, vm::shiftDay, vm::today)
         MacroSummary(food, vm.settings.targets, waterMl, vm::addWater)
-        if (frequent.isNotEmpty()) {
+        val relog = { entry: FoodEntry ->
+            scope.launch {
+                val added = vm.relogFood(entry)
+                val result = snackbar.showSnackbar(
+                    "Logged ${entry.name}", actionLabel = "Undo", duration = SnackbarDuration.Short,
+                )
+                if (result == SnackbarResult.ActionPerformed) vm.undoFood(added)
+            }
+            Unit
+        }
+        if (searching) {
+            HistorySearch(vm, onPick = { relog(it); searching = false }, onClose = { searching = false })
+        } else {
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                item(key = "search") {
+                    SuggestionChip(
+                        onClick = { searching = true },
+                        label = { Icon(Icons.Default.Search, "Search past food", Modifier.size(18.dp)) },
+                    )
+                }
                 items(frequent, key = { it.id }) { entry ->
                     SuggestionChip(
-                        onClick = {
-                            scope.launch {
-                                val added = vm.relogFood(entry)
-                                val result = snackbar.showSnackbar(
-                                    "Logged ${entry.name}", actionLabel = "Undo", duration = SnackbarDuration.Short,
-                                )
-                                if (result == SnackbarResult.ActionPerformed) vm.undoFood(added)
-                            }
-                        },
+                        onClick = { relog(entry) },
                         label = { Text(entry.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                     )
                 }
@@ -255,6 +277,60 @@ private fun WaterLogger(ml: Int, onChange: (Int) -> Unit) {
                 onClick = { onChange(WATER_STEP_ML) },
                 modifier = Modifier.size(40.dp),
             ) { Icon(Icons.Default.Add, "Add 0.5 litres of water") }
+        }
+    }
+}
+
+/** A search field over everything logged before, with matches as one-tap re-log chips underneath. */
+@Composable
+private fun HistorySearch(vm: MainViewModel, onPick: (FoodEntry) -> Unit, onClose: () -> Unit) {
+    var query by rememberSaveable { mutableStateOf("") }
+    val history by produceState<List<FoodSearch.Food>?>(null) { value = vm.foodHistory() }
+    val matches = remember(history, query) { history?.let { FoodSearch.search(it, query) } }
+    // A lazy row keeps its scroll anchored to an item across changes; new results should start at the left.
+    val rowState = rememberLazyListState()
+    LaunchedEffect(matches) { rowState.scrollToItem(0) }
+    val focus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { focus.requestFocus() }
+
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        OutlinedTextField(
+            value = query,
+            onValueChange = { query = it },
+            placeholder = { Text("Search past food") },
+            leadingIcon = { Icon(Icons.Default.Search, null) },
+            trailingIcon = { IconButton(onClick = onClose) { Icon(Icons.Default.Close, "Close search") } },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).focusRequester(focus),
+        )
+        when {
+            matches == null -> {}
+            matches.isEmpty() -> Text(
+                if (history!!.isEmpty()) "Nothing logged yet." else "No matches.",
+                Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            else -> LazyRow(
+                state = rowState,
+                contentPadding = PaddingValues(horizontal = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                items(matches, key = { it.entry.id }) { match ->
+                    val entry = match.entry
+                    SuggestionChip(
+                        onClick = { onPick(entry) },
+                        label = {
+                            // When the amount is what matched, show it so similar logs can be told apart.
+                            Text(
+                                if (match.byAmount && entry.quantity.isNotBlank()) "${entry.name} · ${entry.quantity}" else entry.name,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.widthIn(max = 280.dp),
+                            )
+                        },
+                    )
+                }
+            }
         }
     }
 }
