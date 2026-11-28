@@ -33,6 +33,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetProperties
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -163,7 +165,7 @@ fun FoodConfirmSheet(
             action(rows.map { it.draft() })
         }
     }
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = keepOpenSheetState(), properties = keepOpen) {
         Column(Modifier.padding(horizontal = 16.dp).navigationBarsPadding()) {
             val total = { f: (FoodDraft) -> String -> items.sumOf { f(it).toDoubleOrNull() ?: 0.0 }.roundToInt() }
             Text(
@@ -258,7 +260,7 @@ fun WorkoutConfirmSheet(
 ) {
     val items = remember(initial) { mutableStateListOf(*initial.toTypedArray()) }
     val editing = initial.singleOrNull()?.id?.takeIf { it != 0L }
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = keepOpenSheetState(), properties = keepOpen) {
         Column(Modifier.padding(horizontal = 16.dp).navigationBarsPadding()) {
             Text(if (editing != null) "Edit exercise" else "Confirm", style = MaterialTheme.typography.titleLarge)
             LazyColumn(
@@ -355,3 +357,17 @@ private fun NumField(
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
     )
 }
+
+/**
+ * A sheet that only closes through its own buttons. Swiping it down, tapping outside or pressing back would
+ * otherwise throw away an entry the model just filled in.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun keepOpenSheetState() = rememberModalBottomSheetState(
+    skipPartiallyExpanded = true,
+    confirmValueChange = { it != SheetValue.Hidden },
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
+private val keepOpen = ModalBottomSheetProperties(shouldDismissOnBackPress = false)
